@@ -8,13 +8,62 @@ export default function Tasks() {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const days = [
-    { label: 'M', active: true },
-    { label: 'T', active: true },
-    { label: 'W', active: true },
-    { label: 'T', active: true },
-    { label: 'F', active: true },
-    { label: 'S', active: true },
-    { label: 'S', active: false },
+    { 
+      label: 'M', 
+      active: true,
+      sleepTime: '7h 15m',
+      targetTime: '8h',
+      wokeUpOnTime: true,
+      bedTime: '23:00'
+    },
+    { 
+      label: 'T', 
+      active: true,
+      sleepTime: '6h 45m',
+      targetTime: '8h',
+      wokeUpOnTime: false,
+      bedTime: '23:30'
+    },
+    { 
+      label: 'W', 
+      active: true,
+      sleepTime: '8h 00m',
+      targetTime: '8h',
+      wokeUpOnTime: true,
+      bedTime: '22:45'
+    },
+    { 
+      label: 'T', 
+      active: true,
+      sleepTime: '7h 30m',
+      targetTime: '8h',
+      wokeUpOnTime: true,
+      bedTime: '23:15'
+    },
+    { 
+      label: 'F', 
+      active: true,
+      sleepTime: '6h 15m',
+      targetTime: '8h',
+      wokeUpOnTime: false,
+      bedTime: '00:30'
+    },
+    { 
+      label: 'S', 
+      active: true,
+      sleepTime: '8h 45m',
+      targetTime: '8h',
+      wokeUpOnTime: true,
+      bedTime: '22:30'
+    },
+    { 
+      label: 'S', 
+      active: false,
+      sleepTime: '-',
+      targetTime: '8h',
+      wokeUpOnTime: null,
+      bedTime: '-'
+    }
   ];
 
   const handleDayPress = (index) => {
@@ -58,9 +107,25 @@ export default function Tasks() {
     </TouchableOpacity>
   );
 
-  const sleepQualityMetrics = [
-    { label: 'Deep Sleep', value: '5h 20m', percentage: '80%' },
-    { label: 'Light Sleep', value: '1h 14m', percentage: '20%' },
+  const sleepMetrics = [
+    { 
+      label: 'Bedtime',
+      value: days[selectedDay].bedTime,
+      description: 'When you went to sleep',
+      icon: '🌙'
+    },
+    { 
+      label: 'Wake up',
+      value: days[selectedDay].wokeUpOnTime ? 'On time' : 'Snoozed',
+      description: 'Alarm response',
+      icon: '⏰'
+    },
+    { 
+      label: 'Duration',
+      value: days[selectedDay].sleepTime,
+      description: `Target: ${days[selectedDay].targetTime}`,
+      icon: '⭐️'
+    }
   ];
 
   const challenges = [
@@ -95,38 +160,8 @@ export default function Tasks() {
             className="mx-4 mt-6 bg-white/80 rounded-3xl p-6 shadow-sm"
             style={{ transform: [{ scale: scaleAnim }] }}
           >
-            {/* Header */}
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-xl font-semibold text-gray-800">
-                Sleep last 7 days
-              </Text>
-              <View className="flex-row items-center space-x-2">
-                <Text className="text-sm text-gray-400 font-medium">less</Text>
-                <View className="flex-row space-x-1">
-                  {[1, 2, 3, 4].map((i) => (
-                    <View 
-                      key={i} 
-                      className={`w-2 h-2 rounded-full ${
-                        i <= 2 ? 'bg-sky-400' : 'bg-sky-200'
-                      }`}
-                    />
-                  ))}
-                </View>
-                <Text className="text-sm text-gray-400 font-medium">more</Text>
-              </View>
-            </View>
-
-            {/* Sleep Time */}
-            <View className="items-center mb-8">
-              <View className="bg-sky-50 px-8 py-3 rounded-2xl">
-                <Text className="text-xl font-bold text-sky-900">
-                  6h 34m <Text className="text-sky-400 font-medium">/ 8h</Text>
-                </Text>
-              </View>
-            </View>
-
-            {/* Days */}
-            <View className="flex-row justify-between px-1">
+            {/* Days Selection */}
+            <View className="flex-row justify-between px-1 mb-6">
               {days.map((day, index) => (
                 <DayButton 
                   key={index}
@@ -136,44 +171,51 @@ export default function Tasks() {
                 />
               ))}
             </View>
-          </Animated.View>
 
-          {/* Sleep Quality Section */}
-          <View className="px-4 mt-8">
-            <Text className="text-lg font-semibold text-gray-800 mb-4">
-              Sleep Quality
-            </Text>
-            <View className="bg-white/80 rounded-2xl p-4">
-              {sleepQualityMetrics.map((metric, index) => (
-                <View 
-                  key={index} 
-                  className={`flex-row items-center justify-between ${
-                    index < sleepQualityMetrics.length - 1 ? 'mb-4' : ''
-                  }`}
-                >
-                  <View>
-                    <Text className="text-gray-600 font-medium mb-1">
-                      {metric.label}
+            {/* Sleep Time */}
+            <View className="items-center mb-8">
+              <View className="bg-sky-50 px-8 py-3 rounded-2xl">
+                <Text className="text-xl font-bold text-sky-900">
+                  {days[selectedDay].sleepTime}
+                  {days[selectedDay].sleepTime !== '-' && (
+                    <Text className="text-sky-400 font-medium">
+                      {' '}/ {days[selectedDay].targetTime}
                     </Text>
-                    <Text className="text-2xl font-bold text-sky-900">
+                  )}
+                </Text>
+              </View>
+            </View>
+
+            {/* Daily Stats */}
+            <View className="space-y-4">
+              {sleepMetrics.map((metric, index) => (
+                <View key={index}>
+                  <View className="flex-row items-center justify-between mb-2">
+                    <View className="flex-row items-center">
+                      <Text className="text-2xl mr-3">{metric.icon}</Text>
+                      <View>
+                        <Text className="text-base font-medium text-gray-800">
+                          {metric.label}
+                        </Text>
+                        <Text className="text-sm text-gray-500">
+                          {metric.description}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text className={`text-lg font-bold ${
+                      metric.label === 'Wake up' 
+                        ? metric.value === 'On time' 
+                          ? 'text-emerald-500'
+                          : 'text-amber-500'
+                        : 'text-gray-800'
+                    }`}>
                       {metric.value}
                     </Text>
-                  </View>
-                  <View className="items-end">
-                    <Text className="text-sky-400 font-bold text-lg">
-                      {metric.percentage}
-                    </Text>
-                    <View className="w-20 h-1 bg-gray-100 rounded-full mt-2">
-                      <View 
-                        className="h-1 bg-sky-400 rounded-full"
-                        style={{ width: metric.percentage }}
-                      />
-                    </View>
                   </View>
                 </View>
               ))}
             </View>
-          </View>
+          </Animated.View>
 
           {/* Challenges Section */}
           <View className="px-4 mt-8">

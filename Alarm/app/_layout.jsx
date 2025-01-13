@@ -1,19 +1,33 @@
 import { Stack } from 'expo-router';
+import GlobalProvider from './context/GlobalProvider';
 
 const RootLayout = () => {
+  return (
+    <GlobalProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}>
+      <Stack.Screen name='index' />
+      <Stack.Screen 
+        name='(tabs)' 
+        options={{
+          animation: 'slide_from_bottom',
+          presentation: 'push',
+          gestureEnabled: false 
+        }} 
+      />
+      <Stack.Screen 
+        name='(auth)' 
+        options={{
+          animation: 'slide_from_bottom',
+          animationEnabled: true,
+          contentStyle: { backgroundColor: '#f8fafc' },
+        }}
+      />
+    </Stack>
+    </GlobalProvider>
+  );
+};
 
-    return (
-          <Stack
-            screenOptions={{
-              contentStyle: { backgroundColor: '#09090b' },
-              animation: 'none',
-              animationDuration: 0,
-              animationEnabled: false,
-            }}>
-            <Stack.Screen name='index' options={{ headerShown: false }} />
-            <Stack.Screen name='(tabs)' options={{ headerShown: false }} />
-          </Stack>
-      );
-    };
-    
-    export default RootLayout;
+export default RootLayout;
