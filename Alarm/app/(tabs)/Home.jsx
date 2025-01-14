@@ -61,6 +61,9 @@ export default function Home() {
   const [showSleepPopup, setShowSleepPopup] = useState(false);
   const [showAlarmDetailsPopup, setShowAlarmDetailsPopup] = useState(false);
   const [selectedAlarm, setSelectedAlarm] = useState(null);
+  const [isSleeping, setIsSleeping] = useState(false);
+  const [showSleepingPopup, setShowSleepingPopup] = useState(false);
+  const [sleepStartTime, setSleepStartTime] = useState(null);
 
   const DayButton = ({ day, label }) => (
     <TouchableOpacity
@@ -86,6 +89,31 @@ export default function Home() {
     setShowAlarmDetailsPopup(true);
   };
 
+  const handleDeleteAlarm = () => {
+    axios.put(`https://d0a5-109-245-203-120.ngrok-free.app/deleteAlarm`,{id: user._id, selectedAlarm})
+    .then((res) => {
+      setUser(res.data);
+      AsyncStorage.setItem('@user', JSON.stringify(res.data));
+      setAlarms(res.data.alarms);
+      setShowAlarmDetailsPopup(false);
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+  }
+
+  const handleStartSleep = () => {
+    setIsSleeping(true);
+    setSleepStartTime(new Date());
+    setShowSleepPopup(false);
+  };
+
+  const handleEndSleep = () => {
+    setIsSleeping(false);
+    setSleepStartTime(null);
+    setShowSleepingPopup(false);
+  };
+
   return (
     <LinearGradient 
       colors={['#f8fafc', '#e0f2fe']} 
@@ -95,76 +123,128 @@ export default function Home() {
         {/* Header */}
         <View className="flex-row justify-between items-center px-6 pt-2">
           <Text className="text-2xl font-bold text-sky-900">Alarm</Text>
-          <Text className="text-sky-900/50 font-semibold">next in 7h 32m</Text>
+          <Text className="text-sky-900/50 font-semibold">
+            {(() => {
+              const now = new Date();
+              let nextAlarmTime = null;
+              let minDiff = Infinity;
+
+              alarms.forEach(alarm => {
+                if (!alarm.enabled) return;
+                
+                const [hours, minutes] = alarm.time.split(':').map(Number);
+                const alarmDays = alarm.days;
+                
+                // Check each enabled day
+                ['M','T','W','T2','F','S','S2'].forEach((day, index) => {
+                  if (!alarmDays[day]) return;
+                  
+                  let targetDay = index;
+                  if (day === 'T2') targetDay = 3;
+                  if (day === 'S2') targetDay = 6;
+                  
+                  let targetDate = new Date(now);
+                  targetDate.setHours(hours, minutes, 0, 0);
+                  
+                  // Adjust to next occurrence of this day
+                  const daysToAdd = (targetDay - now.getDay() + 7) % 7;
+                  targetDate.setDate(targetDate.getDate() + daysToAdd);
+                  
+                  // If same day but time already passed, add 7 days
+                  if (daysToAdd === 0 && targetDate < now) {
+                    targetDate.setDate(targetDate.getDate() + 7);
+                  }
+                  
+                  const diff = targetDate - now;
+                  if (diff > 0 && diff < minDiff) {
+                    minDiff = diff;
+                    nextAlarmTime = targetDate;
+                  }
+                });
+              });
+
+              if (!nextAlarmTime) return 'no alarms set';
+              
+              const hours = Math.floor(minDiff / (1000 * 60 * 60));
+              const minutes = Math.floor((minDiff % (1000 * 60 * 60)) / (1000 * 60));
+              
+              return `next in ${hours}h ${minutes}m`;
+            })()}
+          </Text>
         </View>
 
-        {/* Alarm List */}
-        <View className="flex-1 px-4 pt-4">
-          {alarms.length > 0 ? (
-            alarms.map((alarm, index) => (
-              <TouchableOpacity 
-                key={index}
-                className={`${alarm.enabled ? 'bg-white/80' : 'bg-white/60'} rounded-xl mb-3 p-4`}
-                onPress={() => handleAlarmPress(alarm)}
-              >
-                <View className="flex-row justify-between items-center">
-                  <View>
-                    <Text 
-                      className={`text-3xl font-semibold ${
-                        alarm.enabled ? 'text-slate-800' : 'text-slate-400'
-                      }`}
-                    >
-                      {alarm.time}
-                    </Text>
-                    <Text 
-                      className={`mt-1 ${
-                        alarm.enabled ? 'text-slate-500' : 'text-slate-400'
-                      }`}
-                    >
-                      {typeof alarm.days === 'object' ? (
+        {/* Scrollable Alarm List */}
+        <ScrollView 
+          className="flex-1"
+          contentContainerStyle={{ flexGrow: 1 }}
+        >
+          <View className="px-4 pt-4">
+            {alarms.length > 0 ? (
+              <>
+                {alarms.map((alarm, index) => (
+                  <TouchableOpacity 
+                    key={index}
+                    className={`${alarm.enabled ? 'bg-white/80' : 'bg-white/60'} rounded-xl mb-3 p-4`}
+                    onPress={() => handleAlarmPress(alarm)}
+                  >
+                    <View className="flex-row justify-between items-center">
+                      <View>
+                        <Text 
+                          className={`text-3xl font-semibold ${
+                            alarm.enabled ? 'text-slate-800' : 'text-slate-400'
+                          }`}
+                        >
+                          {alarm.time}
+                        </Text>
                         <View className="flex-row space-x-2">
-                          {['M', 'T', 'W', 'T2', 'F', 'S', 'S2'].map((day, index) => (
-                            <View key={`${index}`}>
-                              <Text
-                                className={`${
-                                  alarm.days[day] 
-                                    ? 'text-sky-500 font-medium' 
-                                    : 'text-gray-400'
-                                }`}
-                              >
-                                {day.replace('T2', 'T').replace('S2', 'S')}
-                              </Text>
-                            </View>
-                          ))}
+                          {typeof alarm.days === 'object' ? (
+                            ['M', 'T', 'W', 'T2', 'F', 'S', 'S2'].map((day, idx) => (
+                              <View key={idx}>
+                                <Text
+                                  className={`${
+                                    alarm.days[day] 
+                                      ? 'text-sky-500 font-medium' 
+                                      : 'text-gray-400'
+                                  }`}
+                                >
+                                  {day.replace('T2', 'T').replace('S2', 'S')}
+                                </Text>
+                              </View>
+                            ))
+                          ) : (
+                            <Text className={alarm.enabled ? 'text-slate-500' : 'text-slate-400'}>
+                              {alarm.days}
+                            </Text>
+                          )}
                         </View>
-                      ) : (
-                        alarm.days
-                      )}
-                    </Text>
-                  </View>
-                  <Switch
-                    value={alarm.enabled}
-                    onValueChange={() => {toggleAlarm(alarm._id)}}
-                    trackColor={{ false: '#e2e8f0', true: '#38bdf8' }}
-                    thumbColor={alarm.enabled ? '#ffffff' : '#94a3b8'}
-                  />
-                </View>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <View className="flex-1 items-center justify-center">
-              <Text className="text-4xl mb-4">⏰</Text>
-              <Text className="text-xl font-semibold text-gray-800 mb-2">
-                No Alarms Yet
-              </Text>
-              <Text className="text-gray-500 text-center">
-                Tap the + button to create your first alarm
-              </Text>
-            </View>
-          )}
-        </View>
-        
-        {/* Add Button - Moved above Start Sleep button */}
+                      </View>
+                      <Switch
+                        value={alarm.enabled}
+                        onValueChange={() => toggleAlarm(alarm._id)}
+                        trackColor={{ false: '#e2e8f0', true: '#38bdf8' }}
+                        thumbColor={alarm.enabled ? '#ffffff' : '#94a3b8'}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+                <View className="h-64" />
+              </>
+            ) : (
+              <View className="flex-1 items-center justify-center min-h-[500px]">
+                <Text className="text-4xl mb-4">⏰</Text>
+                <Text className="text-xl font-semibold text-gray-800 mb-2">
+                  No Alarms Yet
+                </Text>
+                <Text className="text-gray-500 text-center">
+                  Tap the + button to create your first alarm
+                </Text>
+                <View className="h-64" />
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        {/* Add Button */}
         <View className="absolute right-6 bottom-40">
           <TouchableOpacity 
             onPress={() => setShowCreateAlarmPopup(true)} 
@@ -174,15 +254,17 @@ export default function Home() {
           </TouchableOpacity>
         </View>
 
-        {/* Start Sleep Button */}
+        {/* Start Sleep/Sleeping Button */}
         <View className="px-4 pb-14">
           <TouchableOpacity 
-            className="bg-sky-500 py-4 rounded-xl flex-row items-center justify-center space-x-2"
-            onPress={() => setShowSleepPopup(true)}
+            className={`${
+              isSleeping ? 'bg-indigo-500' : 'bg-sky-500'
+            } py-4 rounded-xl flex-row items-center justify-center space-x-2`}
+            onPress={() => isSleeping ? setShowSleepingPopup(true) : setShowSleepPopup(true)}
           >
-            <Text className="text-2xl">🌙</Text>
+            <Text className="text-2xl">{isSleeping ? '💤' : '🌙'}</Text>
             <Text className="text-white text-lg font-semibold">
-              Start Sleep
+              {isSleeping ? 'Sleeping' : 'Start Sleep'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -194,12 +276,13 @@ export default function Home() {
             visible={showCreateAlarmPopup}
             onClose={() => setShowCreateAlarmPopup(false)}
           >
-            <ScrollView className="flex-1">
-              <View className="px-6">
-                <Text className="text-2xl font-semibold text-sky-900 text-center mb-8">
-                  Create Alarm
-                </Text>
+            <View className="flex-1">
+              <Text className="text-2xl font-semibold text-sky-900 text-center mb-8 px-6">
+                Create Alarm
+              </Text>
 
+              {/* Scrollable Content */}
+              <ScrollView className="flex-1 px-6">
                 {/* Time Picker */}
                 <View className="bg-sky-50 rounded-xl mb-8">
                   <DateTimePicker
@@ -214,18 +297,6 @@ export default function Home() {
                     textColor="#0ea5e9"
                     themeVariant="light"
                     style={{ height: 180 }}
-                  />
-                </View>
-
-                {/* Label Input */}
-                <View className="mb-6">
-                  <Text className="text-gray-600 mb-2">Label</Text>
-                  <TextInput
-                    className="bg-white/80 p-4 rounded-xl text-gray-800"
-                    placeholder="Alarm name"
-                    placeholderTextColor="#94a3b8"
-                    value={selectedAlarm?.label || ''}
-                    onChangeText={(text) => setSelectedAlarm(prev => ({...prev, label: text}))}
                   />
                 </View>
 
@@ -282,7 +353,12 @@ export default function Home() {
                   <DayButton day="S2" label="S" />
                 </View>
 
-                {/* Create Button */}
+                {/* Bottom padding for scrolling */}
+                <View className="h-20" />
+              </ScrollView>
+
+              {/* Fixed Create Button */}
+              <View className="px-6 pb-6 pt-2 bg-white border-t border-gray-100">
                 <TouchableOpacity 
                   className="bg-sky-400 rounded-xl py-4 px-6"
                   onPress={() => {CreateAlarm(selectedDate, selectedDays)}}
@@ -292,7 +368,7 @@ export default function Home() {
                   </Text>
                 </TouchableOpacity>
               </View>
-            </ScrollView>
+            </View>
           </BottomPopup>
         )}
         
@@ -311,24 +387,210 @@ export default function Home() {
               {/* Wake Up Time */}
               <View className="bg-sky-50 rounded-xl p-4 mb-6">
                 <Text className="text-gray-600 mb-2">Wake up at</Text>
-                <Text className="text-3xl font-semibold text-sky-900">07:00</Text>
-                <Text className="text-gray-500 mt-1">Tomorrow morning</Text>
+                <Text className="text-3xl font-semibold text-sky-900">
+                  {(() => {
+                    const now = new Date();
+                    let nextAlarmTime = null;
+                    let minDiff = Infinity;
+
+                    alarms.forEach(alarm => {
+                      if (!alarm.enabled) return;
+                      
+                      const [hours, minutes] = alarm.time.split(':').map(Number);
+                      const alarmDays = alarm.days;
+                      
+                      ['M','T','W','T2','F','S','S2'].forEach((day, index) => {
+                        if (!alarmDays[day]) return;
+                        
+                        let targetDay = index;
+                        if (day === 'T2') targetDay = 3;
+                        if (day === 'S2') targetDay = 6;
+                        
+                        let targetDate = new Date(now);
+                        targetDate.setHours(hours, minutes, 0, 0);
+                        
+                        const daysToAdd = (targetDay - now.getDay() + 7) % 7;
+                        targetDate.setDate(targetDate.getDate() + daysToAdd);
+                        
+                        if (daysToAdd === 0 && targetDate < now) {
+                          targetDate.setDate(targetDate.getDate() + 7);
+                        }
+                        
+                        const diff = targetDate - now;
+                        if (diff > 0 && diff < minDiff) {
+                          minDiff = diff;
+                          nextAlarmTime = targetDate;
+                        }
+                      });
+                    });
+
+                    return nextAlarmTime ? 
+                      nextAlarmTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) :
+                      'No alarms';
+                  })()}
+                </Text>
+                <Text className="text-gray-500 mt-1">
+                  {(() => {
+                    const now = new Date();
+                    let nextAlarmTime = null;
+                    let minDiff = Infinity;
+
+                    alarms.forEach(alarm => {
+                      if (!alarm.enabled) return;
+                      
+                      const [hours, minutes] = alarm.time.split(':').map(Number);
+                      const alarmDays = alarm.days;
+                      
+                      ['M','T','W','T2','F','S','S2'].forEach((day, index) => {
+                        if (!alarmDays[day]) return;
+                        
+                        let targetDay = index;
+                        if (day === 'T2') targetDay = 3;
+                        if (day === 'S2') targetDay = 6;
+                        
+                        let targetDate = new Date(now);
+                        targetDate.setHours(hours, minutes, 0, 0);
+                        
+                        const daysToAdd = (targetDay - now.getDay() + 7) % 7;
+                        targetDate.setDate(targetDate.getDate() + daysToAdd);
+                        
+                        if (daysToAdd === 0 && targetDate < now) {
+                          targetDate.setDate(targetDate.getDate() + 7);
+                        }
+                        
+                        const diff = targetDate - now;
+                        if (diff > 0 && diff < minDiff) {
+                          minDiff = diff;
+                          nextAlarmTime = targetDate;
+                        }
+                      });
+                    });
+
+                    if (!nextAlarmTime) return 'No upcoming alarms';
+                    
+                    // Check if alarm is today or tomorrow
+                    const today = new Date();
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    
+                    if (nextAlarmTime.getDate() === today.getDate()) {
+                      return 'Today';
+                    } else if (nextAlarmTime.getDate() === tomorrow.getDate()) {
+                      return 'Tomorrow';
+                    } else {
+                      return 'In ' + Math.ceil((nextAlarmTime - today) / (1000 * 60 * 60 * 24)) + ' days';
+                    }
+                  })()}
+                </Text>
               </View>
 
               {/* Sleep Duration */}
               <View className="bg-sky-50 rounded-xl p-4 mb-8">
                 <Text className="text-gray-600 mb-2">Sleep duration</Text>
-                <Text className="text-3xl font-semibold text-sky-900">8h 30m</Text>
+                <Text className={(() => {
+                    const now = new Date();
+                    let nextAlarmTime = null;
+                    let minDiff = Infinity;
+
+                    alarms.forEach(alarm => {
+                      if (!alarm.enabled) return;
+                      
+                      const [hours, minutes] = alarm.time.split(':').map(Number);
+                      const alarmDays = alarm.days;
+                      
+                      ['M','T','W','T2','F','S','S2'].forEach((day, index) => {
+                        if (!alarmDays[day]) return;
+                        
+                        let targetDay = index;
+                        if (day === 'T2') targetDay = 3;
+                        if (day === 'S2') targetDay = 6;
+                        
+                        let targetDate = new Date(now);
+                        targetDate.setHours(hours, minutes, 0, 0);
+                        
+                        const daysToAdd = (targetDay - now.getDay() + 7) % 7;
+                        targetDate.setDate(targetDate.getDate() + daysToAdd);
+                        
+                        if (daysToAdd === 0 && targetDate < now) {
+                          targetDate.setDate(targetDate.getDate() + 7);
+                        }
+                        
+                        const diff = targetDate - now;
+                        if (diff > 0 && diff < minDiff) {
+                          minDiff = diff;
+                          nextAlarmTime = targetDate;
+                        }
+                      });
+                    });
+
+                    if (!nextAlarmTime) return 'text-3xl font-semibold text-sky-900';
+                    
+                    const now_ms = now.getTime();
+                    const alarm_ms = nextAlarmTime.getTime();
+                    const diff_hours = Math.floor((alarm_ms - now_ms) / (1000 * 60 * 60));
+                    const diff_minutes = Math.floor(((alarm_ms - now_ms) % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    // Calculate how close to 8 hours
+                    const totalHours = diff_hours + (diff_minutes / 60);
+                    const distanceFrom8 = Math.abs(8 - totalHours);
+                    
+                    if (distanceFrom8 <= 0.5) return 'text-3xl font-semibold text-green-600'; // Very close to 8 hours
+                    if (distanceFrom8 <= 1) return 'text-3xl font-semibold text-yellow-600'; // Within 1 hour of 8
+                    return 'text-3xl font-semibold text-red-600'; // More than 1 hour difference
+                })()}>
+                  {(() => {
+                    const now = new Date();
+                    let nextAlarmTime = null;
+                    let minDiff = Infinity;
+
+                    alarms.forEach(alarm => {
+                      if (!alarm.enabled) return;
+                      
+                      const [hours, minutes] = alarm.time.split(':').map(Number);
+                      const alarmDays = alarm.days;
+                      
+                      ['M','T','W','T2','F','S','S2'].forEach((day, index) => {
+                        if (!alarmDays[day]) return;
+                        
+                        let targetDay = index;
+                        if (day === 'T2') targetDay = 3;
+                        if (day === 'S2') targetDay = 6;
+                        
+                        let targetDate = new Date(now);
+                        targetDate.setHours(hours, minutes, 0, 0);
+                        
+                        const daysToAdd = (targetDay - now.getDay() + 7) % 7;
+                        targetDate.setDate(targetDate.getDate() + daysToAdd);
+                        
+                        if (daysToAdd === 0 && targetDate < now) {
+                          targetDate.setDate(targetDate.getDate() + 7);
+                        }
+                        
+                        const diff = targetDate - now;
+                        if (diff > 0 && diff < minDiff) {
+                          minDiff = diff;
+                          nextAlarmTime = targetDate;
+                        }
+                      });
+                    });
+
+                    if (!nextAlarmTime) return 'N/A';
+                    
+                    const now_ms = now.getTime();
+                    const alarm_ms = nextAlarmTime.getTime();
+                    const diff_hours = Math.floor((alarm_ms - now_ms) / (1000 * 60 * 60));
+                    const diff_minutes = Math.floor(((alarm_ms - now_ms) % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    return `${diff_hours}h ${diff_minutes}m`;
+                  })()}
+                </Text>
                 <Text className="text-gray-500 mt-1">Recommended: 8 hours</Text>
               </View>
 
               {/* Start Button */}
               <TouchableOpacity 
                 className="bg-sky-500 py-4 rounded-xl"
-                onPress={() => {
-                  // Handle start sleep logic
-                  setShowSleepPopup(false);
-                }}
+                onPress={handleStartSleep}
               >
                 <Text className="text-white text-center text-lg font-semibold">
                   Start Sleep Now
@@ -346,7 +608,7 @@ export default function Home() {
               setShowAlarmDetailsPopup(false);
               setSelectedAlarm(null);
             }}
-            height={0.6}
+            height={0.65}
           >
             <ScrollView className="flex-1">
               <View className="px-6">
@@ -393,8 +655,7 @@ export default function Home() {
                   <TouchableOpacity 
                     className="flex-1 bg-white border border-red-500 py-4 rounded-xl"
                     onPress={() => {
-                      // Handle delete
-                      setShowAlarmDetailsPopup(false);
+                      handleDeleteAlarm();
                     }}
                   >
                     <Text className="text-red-500 text-center text-lg font-semibold">
@@ -417,6 +678,47 @@ export default function Home() {
                 </View>
               </View>
             </ScrollView>
+          </BottomPopup>
+        )}
+        
+        {/* Sleeping Status Popup */}
+        {showSleepingPopup && (
+          <BottomPopup
+            visible={showSleepingPopup}
+            onClose={() => setShowSleepingPopup(false)}
+            height={0.5}
+          >
+            <View className="flex-1 px-6">
+              <Text className="text-2xl font-semibold text-sky-900 text-center mb-8">
+                Sleep Status
+              </Text>
+
+              {/* Sleep Duration */}
+              <View className="bg-sky-50 rounded-xl p-4 mb-8">
+                <Text className="text-gray-600 mb-2">Currently sleeping for</Text>
+                <Text className="text-3xl font-semibold text-sky-900">
+                  {(() => {
+                    if (!sleepStartTime) return '0h 0m';
+                    const now = new Date();
+                    const diff = now - sleepStartTime;
+                    const hours = Math.floor(diff / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    return `${hours}h ${minutes}m`;
+                  })()}
+                </Text>
+                <Text className="text-gray-500 mt-1">Started at {sleepStartTime?.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
+              </View>
+
+              {/* End Sleep Button */}
+              <TouchableOpacity 
+                className="bg-red-500 py-4 rounded-xl"
+                onPress={handleEndSleep}
+              >
+                <Text className="text-white text-center text-lg font-semibold">
+                  End Sleep
+                </Text>
+              </TouchableOpacity>
+            </View>
           </BottomPopup>
         )}
         

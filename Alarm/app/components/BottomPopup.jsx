@@ -63,7 +63,7 @@ const BottomPopup = ({ visible, onClose, height = 0.5, children }) => {
         if (gestureState.dy > 0) {
           slideAnim.setValue(gestureState.dy);
           backdropOpacity.setValue(1 - (gestureState.dy / (SCREEN_HEIGHT * 0.25)));
-        }
+        } 
       },
       onPanResponderRelease: (_, gestureState) => {
         if (gestureState.dy > 50 || gestureState.vy > 0.5) {
