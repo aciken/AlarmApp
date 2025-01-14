@@ -10,6 +10,10 @@ const Signin = require('./Auth/Signin');
 const GetUser = require('./User/getUser');
 const CreateAlarm = require('./Alarms/CreateAlarm');
 const DeleteAlarm = require('./Alarms/DeleteAlarm');
+const ToggleAlarm = require('./Alarms/ToggleAlarm');
+const EditAlarm = require('./Alarms/EditAlarm');
+const StartSleep = require('./Sleep/StartSleep');
+const EndSleep = require('./Sleep/EndSleep');
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
@@ -20,9 +24,10 @@ app.put('/signin', Signin);
 app.post('/getUser', GetUser);
 app.put('/createAlarm', CreateAlarm);
 app.put('/deleteAlarm', DeleteAlarm);
-
-
-
+app.put('/toggleAlarm', ToggleAlarm);
+app.put('/editAlarm', EditAlarm);
+app.put('/startSleep', StartSleep);
+app.put('/endSleep', EndSleep);
 
   app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);

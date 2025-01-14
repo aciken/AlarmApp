@@ -18,7 +18,7 @@ export default function SignIn() {
         if(email === '' || password === ''){
             alert('Please enter your email and password');
         } else {
-        axios.put('https://d0a5-109-245-203-120.ngrok-free.app/signin', {email, password})
+        axios.put('https://ac5a-109-245-203-120.ngrok-free.app/signin', {email, password})
         .then((res) => {
             console.log(res.status);
             if(res.status == 200){

@@ -2,10 +2,10 @@ const User = require('../User/User');
 const mongoose = require('mongoose');
 
 const CreateAlarm = async (req, res) => {
-    const {time, days, userId} = req.body;
+    const {time, days, userId, _id} = req.body;
 
     const alarm = {
-        _id: new mongoose.Types.ObjectId(),
+        _id,
         time,
         days,
         enabled: false

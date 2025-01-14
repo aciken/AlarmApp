@@ -10,11 +10,11 @@ const GlobalProvider = ({ children }) => {
     const [isLogged, setIsLogged] = useState(false);
     const [user, setUser] = useState(null); 
     const [isLoading, setIsLoading] = useState(true);
+    const [localAlarms, setLocalAlarms] = useState([]);
 
     useEffect(() => {
         checkLoginStatus();
     }, []);
-
 
     const checkLoginStatus = async () => {
         try {
@@ -25,8 +25,9 @@ const GlobalProvider = ({ children }) => {
             if (storedUser) {
                 console.log(`storedUser type: ${typeof storedUser}, value: ${storedUser}`)
                 const parsedUser = JSON.parse(storedUser);
+                setLocalAlarms(parsedUser.alarms || []);
                 
-                axios.post('https://d0a5-109-245-203-120.ngrok-free.app/getUser', { id: parsedUser._id })
+                axios.post('https://ac5a-109-245-203-120.ngrok-free.app/getUser', { id: parsedUser._id })
                     .then(res => {
                         console.log('User data:', res.data);
                         if(res.data == 'User not found'){
@@ -34,9 +35,9 @@ const GlobalProvider = ({ children }) => {
                             setIsLogged(false);
                             setUser(null);
                         } else {
-                                setUser(parsedUser);
-                                setIsLogged(true);
-                                router.push('/Home');  
+                            setUser(parsedUser);
+                            setIsLogged(true);
+                            router.push('/Home');  
                         }
                     })
                     .catch(e => {
@@ -53,6 +54,23 @@ const GlobalProvider = ({ children }) => {
         }
     };
 
+    const updateLocalAlarm = async (alarmId, updates) => {
+        const updatedAlarms = user.alarms.map(alarm => 
+            alarm._id === alarmId ? { ...alarm, ...updates } : alarm
+        );
+        
+        // Update both local alarms and user data
+        const updatedUser = { ...user, alarms: updatedAlarms };
+        setUser(updatedUser);
+        await AsyncStorage.setItem('@user', JSON.stringify(updatedUser));
+    };
+
+    const updateUser = async (updates) => {
+        const updatedUser = { ...user, ...updates };
+        setUser(updatedUser);
+        await AsyncStorage.setItem('@user', JSON.stringify(updatedUser));
+    };
+
     return (
         <GlobalContext.Provider
             value={{
@@ -62,11 +80,12 @@ const GlobalProvider = ({ children }) => {
                 setUser, 
                 isLoading,
                 setIsLoading,
+                updateLocalAlarm,
+                updateUser
             }}>
             {children}
         </GlobalContext.Provider>
     );
-
 }
 
 export default GlobalProvider;

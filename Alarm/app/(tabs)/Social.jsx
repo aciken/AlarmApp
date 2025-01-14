@@ -1,8 +1,24 @@
 import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useGlobalContext } from '../context/GlobalProvider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 
 export default function Social() {
+  const { setUser, setIsLogged } = useGlobalContext();
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      setUser(null);
+      setIsLogged(false);
+      router.replace('/');
+    } catch (error) {
+      console.log('Error logging out:', error);
+    }
+  };
+
   const friends = [
     {
       name: 'Sarah M.',
@@ -106,6 +122,18 @@ export default function Social() {
                 550 XP to next level
               </Text>
             </View>
+          </View>
+
+          {/* Logout Button */}
+          <View className="px-4 mt-8">
+            <TouchableOpacity 
+              onPress={handleLogout}
+              className="bg-red-500 p-4 rounded-xl"
+            >
+              <Text className="text-white text-center font-semibold text-lg">
+                Logout
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* Recent Achievements */}

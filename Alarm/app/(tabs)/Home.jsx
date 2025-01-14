@@ -7,23 +7,36 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGlobalContext } from '../context/GlobalProvider';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect } from 'react';
 
 export default function Home() {
-  const { user,setUser } = useGlobalContext();
+  const { updateUser, updateLocalAlarm, user, setUser } = useGlobalContext();
 
   const [alarms, setAlarms] = useState(user.alarms);
 
-  const CreateAlarm = (date, days) => {
+  const CreateAlarm = async (date, days) => {
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const time = `${hours}:${minutes}`;
-    
-    // Convert days object to string format
 
-    
+    const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-    axios.put('https://d0a5-109-245-203-120.ngrok-free.app/createAlarm', 
+    await updateUser({
+      alarms: [...user.alarms, {
+        _id: id,
+        time,
+        days,
+        enabled: false
+      }]
+    });
+    const storedUser = await AsyncStorage.getItem('@user');
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+    setAlarms(parsedUser.alarms);
+
+    axios.put('https://ac5a-109-245-203-120.ngrok-free.app/createAlarm', 
       {
+        _id: id,
         time, 
         days: selectedDays, 
         userId: user._id
@@ -34,23 +47,75 @@ export default function Home() {
         setUser(res.data);
         setAlarms(res.data.alarms);
         AsyncStorage.setItem('@user', JSON.stringify(res.data));
-        setShowCreateAlarmPopup(false);
+
       }
     })
     .catch((err) => {
       console.log(err);
     })
+    setShowCreateAlarmPopup(false);
   }
 
-  // const [alarms, setAlarms] = useState([
-  //   { id: 1, time: '07:00', days: 'M T W T F S S', enabled: true },
-  //   { id: 2, time: '07:00', days: 'M T W T F S S', enabled: false },
-  // ]);
+  const editAlarm = async (alarmId, time, days ) => {
 
-  const toggleAlarm = (id) => {
-    setAlarms(alarms.map(alarm => 
-      alarm._id === id ? { ...alarm, enabled: !alarm.enabled } : alarm
-    ));
+    await updateUser({
+      alarms: user.alarms.map(alarm => 
+        alarm._id === alarmId ? { ...alarm, time, days } : alarm
+      )
+    });
+
+    const storedUser = await AsyncStorage.getItem('@user');
+    const parsedUser = JSON.parse(storedUser);
+    setUser(parsedUser);
+    setAlarms(parsedUser.alarms);
+
+
+
+
+    axios.put('https://ac5a-109-245-203-120.ngrok-free.app/editAlarm', {
+      time,
+      days,
+      userId: user._id,
+      alarmId
+    })
+    .then((res) => {
+      console.log(res.data);
+      setUser(res.data);
+      AsyncStorage.setItem('@user', JSON.stringify(res.data));
+      setAlarms(res.data.alarms);
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+    setShowAlarmDetailsPopup(false);
+  }
+
+
+  const toggleAlarm = async (alarmId) => {
+    const alarm = alarms.find(a => a._id === alarmId);
+    // Update locally first
+    console.log(alarm);
+
+    try {
+      await updateLocalAlarm(alarmId, { enabled: !alarm.enabled });
+      const storedUser = await AsyncStorage.getItem('@user');
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      setAlarms(parsedUser.alarms);
+
+      console.log('updated');
+
+      // Try to sync with server
+      const res = await axios.put('https://ac5a-109-245-203-120.ngrok-free.app/toggleAlarm', {
+        alarmId,
+        enabled: !alarm.enabled,
+        userId: user._id
+      });
+      
+      console.log('finished');
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const [showCreateAlarmPopup, setShowCreateAlarmPopup] = useState(false);
@@ -90,7 +155,7 @@ export default function Home() {
   };
 
   const handleDeleteAlarm = () => {
-    axios.put(`https://d0a5-109-245-203-120.ngrok-free.app/deleteAlarm`,{id: user._id, selectedAlarm})
+    axios.put(`https://ac5a-109-245-203-120.ngrok-free.app/deleteAlarm`,{id: user._id, selectedAlarm})
     .then((res) => {
       setUser(res.data);
       AsyncStorage.setItem('@user', JSON.stringify(res.data));
@@ -103,14 +168,38 @@ export default function Home() {
   }
 
   const handleStartSleep = () => {
-    setIsSleeping(true);
-    setSleepStartTime(new Date());
+
+    const sleepId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+    axios.put('https://ac5a-109-245-203-120.ngrok-free.app/startSleep', {
+      userId: user._id,
+      sleepStartTime: new Date(),
+      sleepId: sleepId
+      })
+    .then((res) => {
+      setUser(res.data);
+      AsyncStorage.setItem('@user', JSON.stringify(res.data));
+    })
+    .catch((err) => {
+      console.log(err);
+    })
     setShowSleepPopup(false);
   };
 
   const handleEndSleep = () => {
-    setIsSleeping(false);
-    setSleepStartTime(null);
+
+    axios.put('https://ac5a-109-245-203-120.ngrok-free.app/endSleep', {
+      userId: user._id,
+      sleepEndTime: new Date(),
+      })
+    .then((res) => {
+      setUser(res.data);
+      AsyncStorage.setItem('@user', JSON.stringify(res.data));
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+
     setShowSleepingPopup(false);
   };
 
@@ -258,13 +347,13 @@ export default function Home() {
         <View className="px-4 pb-14">
           <TouchableOpacity 
             className={`${
-              isSleeping ? 'bg-indigo-500' : 'bg-sky-500'
+              user.sleep.find(sleep => sleep.sleepEndTime === null) ? 'bg-indigo-500' : 'bg-sky-500'
             } py-4 rounded-xl flex-row items-center justify-center space-x-2`}
-            onPress={() => isSleeping ? setShowSleepingPopup(true) : setShowSleepPopup(true)}
+            onPress={() => user.sleep.find(sleep => sleep.sleepEndTime === null) ? setShowSleepingPopup(true) : setShowSleepPopup(true)}
           >
-            <Text className="text-2xl">{isSleeping ? '💤' : '🌙'}</Text>
+            <Text className="text-2xl">{user.sleep.find(sleep => sleep.sleepEndTime === null) ? '💤' : '🌙'}</Text>
             <Text className="text-white text-lg font-semibold">
-              {isSleeping ? 'Sleeping' : 'Start Sleep'}
+              {user.sleep.find(sleep => sleep.sleepEndTime === null) ? 'Sleeping' : 'Start Sleep'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -344,13 +433,26 @@ export default function Home() {
 
                 {/* Day Selection */}
                 <View className="flex-row justify-between mb-8">
-                  <DayButton day="M" label="M" />
-                  <DayButton day="T" label="T" />
-                  <DayButton day="W" label="W" />
-                  <DayButton day="T2" label="T" />
-                  <DayButton day="F" label="F" />
-                  <DayButton day="S" label="S" />
-                  <DayButton day="S2" label="S" />
+                  {['M', 'T', 'W', 'T2', 'F', 'S', 'S2'].map((day, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => {
+                        setSelectedDays(prev => ({
+                          ...prev,
+                          [day]: !prev[day]
+                        }));
+                      }}
+                      className={`w-10 h-10 rounded-full items-center justify-center border ${
+                        selectedDays[day] ? 'bg-sky-400 border-sky-400' : 'border-sky-300'
+                      }`}
+                    >
+                      <Text 
+                        className={selectedDays[day] ? 'text-white' : 'text-sky-400'}
+                      >
+                        {day.replace('T2', 'T').replace('S2', 'S')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
 
                 {/* Bottom padding for scrolling */}
@@ -625,6 +727,7 @@ export default function Home() {
                     onChange={(event, date) => {
                       if (date) {
                         // Handle time change
+                        setSelectedAlarm(prev => ({...prev, time: date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}));
                       }
                     }}
                     textColor="#0ea5e9"
@@ -638,6 +741,16 @@ export default function Home() {
                   {['M', 'T', 'W', 'T2', 'F', 'S', 'S2'].map((day, index) => (
                     <TouchableOpacity
                       key={index}
+                      onPress={() => {
+                        const updatedDays = {
+                          ...selectedAlarm.days,
+                          [day]: !selectedAlarm.days[day]
+                        };
+                        setSelectedAlarm({
+                          ...selectedAlarm,
+                          days: updatedDays
+                        });
+                      }}
                       className={`w-10 h-10 rounded-full items-center justify-center border ${
                         selectedAlarm.days[day] ? 'bg-sky-400 border-sky-400' : 'border-sky-300'
                       }`}
@@ -667,8 +780,8 @@ export default function Home() {
                   <TouchableOpacity 
                     className="flex-1 bg-sky-500 py-4 rounded-xl"
                     onPress={() => {
-                      // Handle save changes
-                      setShowAlarmDetailsPopup(false);
+                      editAlarm(selectedAlarm._id, selectedAlarm.time, selectedAlarm.days);
+
                     }}
                   >
                     <Text className="text-white text-center text-lg font-semibold">
@@ -698,15 +811,24 @@ export default function Home() {
                 <Text className="text-gray-600 mb-2">Currently sleeping for</Text>
                 <Text className="text-3xl font-semibold text-sky-900">
                   {(() => {
-                    if (!sleepStartTime) return '0h 0m';
+                    const currentSleep = user.sleep.find(sleep => sleep.sleepEndTime === null);
+                    if (!currentSleep) return '0h 0m';
                     const now = new Date();
-                    const diff = now - sleepStartTime;
+                    const sleepStart = new Date(currentSleep.sleepStartTime);
+                    const diff = now - sleepStart;
                     const hours = Math.floor(diff / (1000 * 60 * 60));
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     return `${hours}h ${minutes}m`;
                   })()}
                 </Text>
-                <Text className="text-gray-500 mt-1">Started at {sleepStartTime?.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
+                <Text className="text-gray-500 mt-1">Started at {(() => {
+                  const sleepStart = new Date(user.sleep.find(sleep => sleep.sleepEndTime === null)?.sleepStartTime);
+                  return sleepStart.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  });
+                })()}</Text>
               </View>
 
               {/* End Sleep Button */}
