@@ -18,13 +18,13 @@ export default function SignIn() {
         if(email === '' || password === ''){
             alert('Please enter your email and password');
         } else {
-        axios.put('https://ac5a-109-245-203-120.ngrok-free.app/signin', {email, password})
+        axios.put('https://5364-109-245-202-17.ngrok-free.app/signin', {email, password})
         .then((res) => {
             console.log(res.status);
             if(res.status == 200){
                 console.log('yes');
                 AsyncStorage.setItem('@user', JSON.stringify(res.data));
-                router.push('Home');
+                router.push('Wake');
             } else {
                 alert('Invalid email or password');
             }
@@ -39,7 +39,7 @@ export default function SignIn() {
 
   return (
     <LinearGradient
-      colors={['#f8fafc', '#e0f2fe']}
+      colors={['#0f172a', '#1e293b']}
       style={{ flex: 1 }}
     >
       <SafeAreaView className="flex-1">
@@ -49,20 +49,20 @@ export default function SignIn() {
             onPress={() => router.back()}
             className="mt-2 mb-8 w-8 h-8 items-center justify-center"
           >
-            <Text className="text-2xl text-gray-600">←</Text>
+            <Text className="text-2xl text-gray-400">←</Text>
           </TouchableOpacity>
 
           {/* Header */}
           <View className="items-center mb-12">
-            <View className="bg-sky-50 rounded-full p-1 mb-4">
-              <View className="bg-sky-100 rounded-full p-4">
+            <View className="bg-gray-800/50 rounded-full p-1 mb-4">
+              <View className="bg-gray-800 rounded-full p-4">
                 <Text className="text-4xl">⏰</Text>
               </View>
             </View>
-            <Text className="text-3xl font-bold text-gray-800">
+            <Text className="text-3xl font-bold text-gray-200">
               Welcome Back
             </Text>
-            <Text className="text-gray-500 mt-2">
+            <Text className="text-gray-400 mt-2">
               Sign in to continue tracking your sleep
             </Text>
           </View>
@@ -70,13 +70,13 @@ export default function SignIn() {
           {/* Form */}
           <View className="space-y-4">
             <View>
-              <Text className="text-gray-700 font-medium mb-2 ml-1">
+              <Text className="text-gray-300 font-medium mb-2 ml-1">
                 Email
               </Text>
               <TextInput
-                className="bg-white/80 p-4 rounded-xl text-gray-800"
+                className="bg-gray-800/80 p-4 rounded-xl text-gray-200"
                 placeholder="Enter your email"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#64748b"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 onChangeText={(text) => setEmail(text)}
@@ -84,27 +84,30 @@ export default function SignIn() {
             </View>
 
             <View>
-              <Text className="text-gray-700 font-medium mb-2 ml-1">
+              <Text className="text-gray-300 font-medium mb-2 ml-1">
                 Password
               </Text>
               <TextInput
-                className="bg-white/80 p-4 rounded-xl text-gray-800"
+                className="bg-gray-800/80 p-4 rounded-xl text-gray-200"
                 placeholder="Enter your password"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#64748b"
                 secureTextEntry
                 onChangeText={(text) => setPassword(text)}
               />
             </View>
 
             <TouchableOpacity>
-              <Text className="text-sky-500 font-medium text-right">
+              <Text className="text-sky-400 font-medium text-right">
                 Forgot Password?
               </Text>
             </TouchableOpacity>
           </View>
 
           {/* Sign In Button */}
-          <TouchableOpacity className="bg-sky-500 py-4 rounded-xl mt-8" onPress={handleSignIn}>
+          <TouchableOpacity 
+            className="bg-sky-600 py-4 rounded-xl mt-8"
+            onPress={handleSignIn}
+          >
             <Text className="text-white text-center font-semibold text-lg">
               Sign In
             </Text>
@@ -112,8 +115,8 @@ export default function SignIn() {
 
           {/* Sign Up Link */}
           <View className="flex-row justify-center mt-8">
-            <Text className="text-gray-600">Don't have an account? </Text>
-            <Link href="/signup" className="text-sky-500 font-medium">
+            <Text className="text-gray-400">Don't have an account? </Text>
+            <Link href="/signup" className="text-sky-400 font-medium">
               Sign Up
             </Link>
           </View>

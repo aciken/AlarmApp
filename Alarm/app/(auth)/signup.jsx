@@ -17,12 +17,12 @@ export default function SignUp() {
     const handleSignUp = () => {
         console.log(name, email, password, confirmPassword);
 
-        axios.put('https://d0a5-109-245-203-120.ngrok-free.app/signup', {name, email, password, confirmPassword})
+        axios.put('https://5364-109-245-202-17.ngrok-free.app/signup', {name, email, password, confirmPassword})
         .then((res) => {
             if(res.status == 201){
             AsyncStorage.setItem('@user', JSON.stringify(res.data));
             console.log(res.data);
-            router.push('Home');
+            router.push('Wake');
             }
         })
         .catch((err) => {
@@ -33,7 +33,7 @@ export default function SignUp() {
 
   return (
     <LinearGradient
-      colors={['#f8fafc', '#e0f2fe']}
+      colors={['#0f172a', '#1e293b']}
       style={{ flex: 1 }}
     >
       <SafeAreaView className="flex-1">
@@ -43,20 +43,20 @@ export default function SignUp() {
             onPress={() => router.back()}
             className="mt-2 mb-8 w-8 h-8 items-center justify-center"
           >
-            <Text className="text-2xl text-gray-600">←</Text>
+            <Text className="text-2xl text-gray-400">←</Text>
           </TouchableOpacity>
 
           {/* Header */}
           <View className="items-center mb-12">
-            <View className="bg-sky-50 rounded-full p-1 mb-4">
-              <View className="bg-sky-100 rounded-full p-4">
+            <View className="bg-gray-800/50 rounded-full p-1 mb-4">
+              <View className="bg-gray-800 rounded-full p-4">
                 <Text className="text-4xl">😴</Text>
               </View>
             </View>
-            <Text className="text-3xl font-bold text-gray-800">
+            <Text className="text-3xl font-bold text-gray-200">
               Create Account
             </Text>
-            <Text className="text-gray-500 mt-2">
+            <Text className="text-gray-400 mt-2">
               Start your journey to better sleep
             </Text>
           </View>
@@ -64,25 +64,25 @@ export default function SignUp() {
           {/* Form */}
           <View className="space-y-4">
             <View>
-              <Text className="text-gray-700 font-medium mb-2 ml-1">
-                Full Name
+              <Text className="text-gray-300 font-medium mb-2 ml-1">
+                Name
               </Text>
               <TextInput
-                className="bg-white/80 p-4 rounded-xl text-gray-800"
-                placeholder="Enter your full name"
-                placeholderTextColor="#94a3b8"
+                className="bg-gray-800/80 p-4 rounded-xl text-gray-200"
+                placeholder="Enter your name"
+                placeholderTextColor="#64748b"
                 onChangeText={(text) => setName(text)}
               />
             </View>
 
             <View>
-              <Text className="text-gray-700 font-medium mb-2 ml-1">
+              <Text className="text-gray-300 font-medium mb-2 ml-1">
                 Email
               </Text>
               <TextInput
-                className="bg-white/80 p-4 rounded-xl text-gray-800"
+                className="bg-gray-800/80 p-4 rounded-xl text-gray-200"
                 placeholder="Enter your email"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#64748b"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 onChangeText={(text) => setEmail(text)}
@@ -90,26 +90,26 @@ export default function SignUp() {
             </View>
 
             <View>
-              <Text className="text-gray-700 font-medium mb-2 ml-1">
+              <Text className="text-gray-300 font-medium mb-2 ml-1">
                 Password
               </Text>
               <TextInput
-                className="bg-white/80 p-4 rounded-xl text-gray-800"
+                className="bg-gray-800/80 p-4 rounded-xl text-gray-200"
                 placeholder="Create a password"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#64748b"
                 secureTextEntry
                 onChangeText={(text) => setPassword(text)}
               />
             </View>
 
             <View>
-              <Text className="text-gray-700 font-medium mb-2 ml-1">
+              <Text className="text-gray-300 font-medium mb-2 ml-1">
                 Confirm Password
               </Text>
               <TextInput
-                className="bg-white/80 p-4 rounded-xl text-gray-800"
+                className="bg-gray-800/80 p-4 rounded-xl text-gray-200"
                 placeholder="Confirm your password"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor="#64748b"
                 secureTextEntry
                 onChangeText={(text) => setConfirmPassword(text)}
               />
@@ -117,7 +117,10 @@ export default function SignUp() {
           </View>
 
           {/* Sign Up Button */}
-          <TouchableOpacity className="bg-sky-500 py-4 rounded-xl mt-8" onPress={handleSignUp}>
+          <TouchableOpacity 
+            className="bg-sky-600 py-4 rounded-xl mt-8"
+            onPress={handleSignUp}
+          >
             <Text className="text-white text-center font-semibold text-lg">
               Create Account
             </Text>
@@ -125,8 +128,8 @@ export default function SignUp() {
 
           {/* Sign In Link */}
           <View className="flex-row justify-center mt-8">
-            <Text className="text-gray-600">Already have an account? </Text>
-            <Link href="/signin" className="text-sky-500 font-medium">
+            <Text className="text-gray-400">Already have an account? </Text>
+            <Link href="/signin" className="text-sky-400 font-medium">
               Sign In
             </Link>
           </View>

@@ -14,6 +14,7 @@ const ToggleAlarm = require('./Alarms/ToggleAlarm');
 const EditAlarm = require('./Alarms/EditAlarm');
 const StartSleep = require('./Sleep/StartSleep');
 const EndSleep = require('./Sleep/EndSleep');
+const SaveWakeup = require('./Wakeup/SaveWakeup');
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
@@ -28,6 +29,7 @@ app.put('/toggleAlarm', ToggleAlarm);
 app.put('/editAlarm', EditAlarm);
 app.put('/startSleep', StartSleep);
 app.put('/endSleep', EndSleep);
+app.put('/savewakeup', SaveWakeup);
 
   app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);

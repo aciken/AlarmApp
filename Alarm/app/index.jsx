@@ -1,75 +1,60 @@
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState, useEffect } from 'react';
+import { Link } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useGlobalContext } from './context/GlobalProvider';
+import { useEffect } from 'react';
+import { router } from 'expo-router';
 
-export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
+export default function Index() {
+  const { isLogged, isLoading } = useGlobalContext();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#0ea5e9" />
-      </View>
-    );
-  }
+    if (isLogged && !isLoading) {
+      router.push('/Wake');
+    }
+  }, [isLogged, isLoading]);
 
   return (
-    <LinearGradient 
-      colors={['#f8fafc', '#e0f2fe']} 
+    <LinearGradient
+      colors={['#0f172a', '#1e293b']}
       style={{ flex: 1 }}
     >
       <SafeAreaView className="flex-1">
-        {/* Header */}
-        <View className="flex-1 items-center justify-center p-6">
-          <View className="bg-sky-50 rounded-full p-1 mb-8">
-            <View className="bg-sky-100 rounded-full p-4">
-              <Text className="text-4xl">⏰</Text>
+        <View className="flex-1 items-center justify-center px-6">
+          {/* Logo/Icon */}
+          <View className="items-center mb-12">
+            <View className="bg-gray-800/50 rounded-full p-1 mb-4">
+              <View className="bg-gray-800 rounded-full p-8">
+                <Text className="text-6xl">⏰</Text>
+              </View>
             </View>
+            <Text className="text-4xl font-bold text-gray-200">
+              Sleep Better
+            </Text>
+            <Text className="text-gray-400 text-lg mt-2">
+              Track and improve your sleep
+            </Text>
           </View>
-          <Text className="text-4xl font-bold text-gray-800 mb-4">
-            Smart Alarm
-          </Text>
-          <Text className="text-lg text-gray-500 text-center mb-12">
-            Wake up better, live better
-          </Text>
 
-          {/* Main Buttons */}
+          {/* Action Buttons */}
           <View className="w-full space-y-4">
-            <TouchableOpacity 
-              onPress={() => router.push('/(auth)/signup')} 
-              className="bg-sky-500 p-4 rounded-xl"
-            >
-              <Text className="text-lg font-semibold text-white text-center">
-                Create Account
-              </Text>
-            </TouchableOpacity>
+            <Link href="/signup" asChild>
+              <TouchableOpacity className="bg-sky-600 py-4 rounded-xl">
+                <Text className="text-white text-center font-semibold text-lg">
+                  Create Account
+                </Text>
+              </TouchableOpacity>
+            </Link>
 
-            <TouchableOpacity 
-              onPress={() => router.push('/(auth)/signin')}
-              className="bg-white/80 border border-sky-100 p-4 rounded-xl"
-            >
-              <Text className="text-lg font-semibold text-sky-500 text-center">
-                Sign In
-              </Text>
-            </TouchableOpacity>
+            <Link href="/signin" asChild>
+              <TouchableOpacity className="bg-gray-800/80 py-4 rounded-xl border border-gray-700">
+                <Text className="text-gray-200 text-center font-semibold text-lg">
+                  Sign In
+                </Text>
+              </TouchableOpacity>
+            </Link>
           </View>
-        </View>
-
-        {/* Footer */}
-        <View className="pb-8 px-6">
-          <Text className="text-gray-400 text-center">
-            Make every morning count
-          </Text>
         </View>
       </SafeAreaView>
     </LinearGradient>

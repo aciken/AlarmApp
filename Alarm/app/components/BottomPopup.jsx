@@ -92,7 +92,7 @@ const BottomPopup = ({ visible, onClose, height = 0.5, children }) => {
       <Animated.View 
         style={{ 
           flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.5)',
+          backgroundColor: 'rgba(0,0,0,0.7)',
           opacity: backdropOpacity,
         }}
         pointerEvents="auto"
@@ -106,9 +106,13 @@ const BottomPopup = ({ visible, onClose, height = 0.5, children }) => {
           style={{
             transform: [{ translateY: slideAnim }],
             height: `${height * 100}%`,
-            backgroundColor: 'white',
+            backgroundColor: '#1e293b',
             borderTopLeftRadius: 24,
             borderTopRightRadius: 24,
+            borderColor: '#334155',
+            borderTopWidth: 1,
+            borderLeftWidth: 1,
+            borderRightWidth: 1,
           }}
         >
           {/* Drag Handle */}
@@ -116,7 +120,7 @@ const BottomPopup = ({ visible, onClose, height = 0.5, children }) => {
             {...panResponder.panHandlers}
             className="w-full items-center pt-2 pb-4"
           >
-            <View className="w-12 h-1.5 bg-gray-300 rounded-full" />
+            <View className="w-12 h-1.5 bg-gray-700 rounded-full" />
           </View>
 
           {/* Content */}

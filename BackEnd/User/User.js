@@ -8,7 +8,14 @@ const userSchema = new mongoose.Schema({
     email: {type: String, required: true, unique: true},
     password: {type: String, required: true},
     alarms: {type: Array, default: []},
-    sleep: {type: Array, default: []}
+    sleep: {type: Array, default: []},
+    wakeup: {type: Object, default: {
+        time: null,
+        vibration: false,
+        gradualVolume: false,
+        wakeUpChallange: null,
+        alarmSound: null,
+    }}
 });
 
 const User = mongoose.model('User', userSchema);

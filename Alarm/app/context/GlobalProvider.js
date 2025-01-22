@@ -27,7 +27,7 @@ const GlobalProvider = ({ children }) => {
                 const parsedUser = JSON.parse(storedUser);
                 setLocalAlarms(parsedUser.alarms || []);
                 
-                axios.post('https://ac5a-109-245-203-120.ngrok-free.app/getUser', { id: parsedUser._id })
+                axios.post('https://5364-109-245-202-17.ngrok-free.app/getUser', { id: parsedUser._id })
                     .then(res => {
                         console.log('User data:', res.data);
                         if(res.data == 'User not found'){
@@ -37,7 +37,7 @@ const GlobalProvider = ({ children }) => {
                         } else {
                             setUser(parsedUser);
                             setIsLogged(true);
-                            router.push('/Home');  
+                            router.push('/Wake');  
                         }
                     })
                     .catch(e => {

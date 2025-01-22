@@ -59,7 +59,7 @@ export default function Social() {
   ];
 
   const FriendCard = ({ friend }) => (
-    <View className="bg-white/80 rounded-2xl p-4 mb-4">
+    <View className="bg-gray-900/50 rounded-2xl p-4 mb-4 border border-gray-800/50">
       <View className="flex-row items-center">
         <Image
           source={{ uri: friend.avatar }}
@@ -67,19 +67,19 @@ export default function Social() {
         />
         <View className="flex-1 ml-4">
           <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-semibold text-gray-800">
+            <Text className="text-lg font-semibold text-gray-200">
               {friend.name}
             </Text>
-            <View className="bg-yellow-100 px-3 py-1 rounded-full">
-              <Text className="text-yellow-600 font-medium">
+            <View className="bg-yellow-500/20 px-3 py-1 rounded-full">
+              <Text className="text-yellow-400 font-medium">
                 Lvl {friend.level}
               </Text>
             </View>
           </View>
           <View className="flex-row items-center mt-1">
             <View className="flex-row items-center">
-              <Text className="text-sky-500 font-medium">🔥 {friend.streak} days</Text>
-              <Text className="text-gray-400 mx-2">•</Text>
+              <Text className="text-sky-400 font-medium">🔥 {friend.streak} days</Text>
+              <Text className="text-gray-600 mx-2">•</Text>
               <Text className="text-gray-500">{friend.lastSleep} sleep</Text>
             </View>
           </View>
@@ -90,7 +90,7 @@ export default function Social() {
 
   return (
     <LinearGradient 
-      colors={['#f8fafc', '#e0f2fe']} 
+      colors={['#0f172a', '#1e293b']} 
       style={{ flex: 1 }}
     >
       <SafeAreaView className="flex-1">
@@ -99,22 +99,22 @@ export default function Social() {
           contentContainerStyle={{ paddingBottom: 100 }}
         >
           {/* Profile Stats */}
-          <View className="mx-4 mt-6 bg-white/80 rounded-3xl p-6 shadow-sm">
+          <View className="mx-4 mt-6 bg-gray-900/50 rounded-3xl p-6 shadow-sm border border-gray-800/50">
             <View className="items-center">
-              <View className="bg-sky-50 rounded-full p-1 mb-4">
-                <View className="bg-sky-100 rounded-full p-4">
+              <View className="bg-gray-800/50 rounded-full p-1 mb-4">
+                <View className="bg-gray-800 rounded-full p-4">
                   <Text className="text-4xl">😴</Text>
                 </View>
               </View>
-              <Text className="text-2xl font-bold text-gray-800 mb-1">
+              <Text className="text-2xl font-bold text-gray-200 mb-1">
                 Sleep Master
               </Text>
               <Text className="text-gray-500 mb-4">
                 Level 28 • 2,450 XP
               </Text>
-              <View className="w-full h-2 bg-gray-100 rounded-full">
+              <View className="w-full h-2 bg-gray-800 rounded-full">
                 <View 
-                  className="h-2 bg-sky-400 rounded-full"
+                  className="h-2 bg-sky-500 rounded-full"
                   style={{ width: '75%' }}
                 />
               </View>
@@ -128,7 +128,7 @@ export default function Social() {
           <View className="px-4 mt-8">
             <TouchableOpacity 
               onPress={handleLogout}
-              className="bg-red-500 p-4 rounded-xl"
+              className="bg-red-500/80 p-4 rounded-xl"
             >
               <Text className="text-white text-center font-semibold text-lg">
                 Logout
@@ -138,16 +138,16 @@ export default function Social() {
 
           {/* Recent Achievements */}
           <View className="px-4 mt-8">
-            <Text className="text-lg font-semibold text-gray-800 mb-4">
+            <Text className="text-lg font-semibold text-gray-200 mb-4">
               Recent Achievements
             </Text>
             <View className="space-y-4">
               {achievements.map((achievement, index) => (
-                <View key={index} className="bg-white/80 rounded-2xl p-4">
+                <View key={index} className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
                   <View className="flex-row items-start">
                     <Text className="text-2xl mr-3">{achievement.icon}</Text>
                     <View className="flex-1">
-                      <Text className="text-base font-semibold text-gray-800">
+                      <Text className="text-base font-semibold text-gray-200">
                         {achievement.title}
                       </Text>
                       <Text className="text-sm text-gray-500 mt-1">
@@ -166,11 +166,11 @@ export default function Social() {
           {/* Friends */}
           <View className="px-4 mt-8">
             <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-lg font-semibold text-gray-800">
+              <Text className="text-lg font-semibold text-gray-200">
                 Friends
               </Text>
               <TouchableOpacity>
-                <Text className="text-sky-500 font-medium">See All</Text>
+                <Text className="text-sky-400 font-medium">See All</Text>
               </TouchableOpacity>
             </View>
             {friends.map((friend, index) => (

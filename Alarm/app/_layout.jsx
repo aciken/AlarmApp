@@ -17,12 +17,30 @@ const RootLayout = () => {
           gestureEnabled: false 
         }} 
       />
+            <Stack.Screen 
+        name='(alarm)' 
+        options={{
+          animation: 'slide_from_bottom',
+          presentation: 'push',
+          gestureEnabled: false 
+        }} 
+      />
       <Stack.Screen 
         name='(auth)' 
         options={{
           animation: 'slide_from_bottom',
           animationEnabled: true,
           contentStyle: { backgroundColor: '#f8fafc' },
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen 
+        name='(pages)' 
+        options={{
+          animation: 'slide_from_bottom',
+          animationEnabled: true,
+          contentStyle: { backgroundColor: '#f8fafc' },
+          presentation: 'modal',
         }}
       />
     </Stack>
