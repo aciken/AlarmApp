@@ -1,75 +1,91 @@
-import { View, Text, TouchableOpacity, Animated, ScrollView, Vibration } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, ScrollView, Vibration, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, useRef, useEffect } from 'react';
+import { useGlobalContext } from '../context/GlobalProvider';
 
 export default function Tasks() {
-  const [selectedDay, setSelectedDay] = useState(0);
+  const { user } = useGlobalContext();
+  const [selectedDay, setSelectedDay] = useState(null);
   const [dates, setDates] = useState([]);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const scrollViewRef = useRef(null);
+
+  const calculateSleepForDate = (date) => {
+    if (!user.sleep || user.sleep.length === 0) return null;
+
+    // Find sleep sessions that ended on this date
+    const sleepSession = user.sleep.find(sleep => {
+      if (!sleep.sleepEndTime) return false;
+      const endDate = new Date(sleep.sleepEndTime);
+      return endDate.toDateString() === date.toDateString();
+    });
+
+    if (!sleepSession) return null;
+
+    // Calculate duration
+    const start = new Date(sleepSession.sleepStartTime);
+    const end = new Date(sleepSession.sleepEndTime);
+    const durationMs = end - start;
+    
+    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return {
+      sleepTime: `${hours}h ${minutes}m`,
+      targetTime: '8h',
+      wokeUpOnTime: true, // You can add logic for this based on user.wakeup.time
+      bedTime: start.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      })
+    };
+  };
 
   useEffect(() => {
-    // Generate last 7 days and next 7 days
+    // Generate last 21 days
     const generateDates = () => {
       const datesArray = [];
       const today = new Date();
 
-      // Add past 7 days
-      for (let i = 7; i >= 1; i--) {
+      // Add past 21 days (including today)
+      for (let i = 20; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(today.getDate() - i);
+        const sleepData = calculateSleepForDate(date);
+        const isToday = i === 0;
+        
         datesArray.push({
           date,
           label: date.getDate(),
-          weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
-          active: true,
-          sleepTime: '7h 30m',
-          targetTime: '8h',
-          wokeUpOnTime: Math.random() > 0.3,
-          bedTime: '23:00'
-        });
-      }
-
-      // Add today
-      datesArray.push({
-        date: today,
-        label: today.getDate(),
-        weekday: 'Today',
-        active: true,
-        sleepTime: '8h 00m',
-        targetTime: '8h',
-        wokeUpOnTime: true,
-        bedTime: '22:45'
-      });
-
-      // Add next 7 days
-      for (let i = 1; i <= 7; i++) {
-        const date = new Date(today);
-        date.setDate(today.getDate() + i);
-        datesArray.push({
-          date,
-          label: date.getDate(),
-          weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
-          active: false,
-          sleepTime: '-',
-          targetTime: '8h',
-          wokeUpOnTime: null,
-          bedTime: '-'
+          weekday: isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' }),
+          isToday,
+          sleepTime: sleepData?.sleepTime ?? '-',
+          targetTime: sleepData?.targetTime ?? '8h',
+          wokeUpOnTime: sleepData?.wokeUpOnTime ?? null,
+          bedTime: sleepData?.bedTime ?? '-'
         });
       }
 
       setDates(datesArray);
-      // Set selected day to today (index 7)
-      setSelectedDay(7);
+      setSelectedDay(20); // Select today (last index)
     };
 
     generateDates();
+  }, [user.sleep]);
+
+  // Scroll to today when component mounts
+  useEffect(() => {
+    if (scrollViewRef.current) {
+      // Wait for layout to complete
+      setTimeout(() => {
+        scrollViewRef.current.scrollToEnd({ animated: true });
+      }, 100);
+    }
   }, []);
 
   const handleDayPress = (index) => {
-    // More subtle vibration feedback
-
-
     setSelectedDay(index);
     Animated.sequence([
       Animated.timing(scaleAnim, {
@@ -85,58 +101,256 @@ export default function Tasks() {
     ]).start();
   };
 
-  const DayButton = ({ date, active, index }) => (
-    <TouchableOpacity
-      onPress={() => handleDayPress(index)}
-      className={`w-14 h-16 rounded-xl items-center justify-center mx-1 ${
-        index === selectedDay 
-          ? 'bg-sky-500 shadow-sm shadow-sky-500/50' 
-          : active 
-            ? 'bg-gray-800/80 border border-gray-700' 
-            : 'bg-gray-900/60 border border-gray-800'
-      }`}
-    >
-      <Text 
-        className={`text-xs ${
-          index === selectedDay 
-            ? 'text-white/80' 
-            : active 
-              ? 'text-gray-400' 
-              : 'text-gray-600'
-        }`}
+  const DayButton = ({ date, index }) => {
+    const isSelected = index === selectedDay;
+    
+    return (
+      <TouchableOpacity
+        onPress={() => handleDayPress(index)}
+        className={`w-16 h-20 rounded-xl items-center justify-center mx-1 
+          ${date.isToday 
+            ? isSelected
+              ? 'bg-sky-500/20 border-2 border-sky-500/50 shadow-lg shadow-sky-500/20' 
+              : 'bg-sky-500/10 border-2 border-sky-500/30'
+            : isSelected
+              ? 'bg-sky-500/20 border border-sky-500/30'
+              : 'border border-gray-800 bg-gray-900/60'}
+        `}
       >
-        {date.weekday}
-      </Text>
-      <Text 
-        className={`font-medium text-base mt-1 ${
-          index === selectedDay 
-            ? 'text-white' 
-            : active 
-              ? 'text-gray-300' 
-              : 'text-gray-600'
-        }`}
-      >
-        {date.label}
-      </Text>
-    </TouchableOpacity>
-  );
+        <Text 
+          className={`text-xs mb-1
+            ${date.isToday 
+              ? isSelected
+                ? 'text-sky-400 font-semibold'
+                : 'text-sky-400 font-medium'
+              : isSelected 
+                ? 'text-sky-400 font-medium'
+                : 'text-gray-500'
+            }
+          `}
+        >
+          {date.weekday}
+        </Text>
+        <Text 
+          className={`text-xl
+            ${date.isToday 
+              ? isSelected
+                ? 'text-white font-bold'
+                : 'text-white font-semibold'
+              : isSelected
+                ? 'text-white font-semibold'
+                : 'text-gray-400 font-medium'
+            }
+          `}
+        >
+          {date.label}
+        </Text>
+        {date.isToday && (
+          <View className={`absolute bottom-2 flex-row space-x-1 ${isSelected ? 'opacity-100' : 'opacity-70'}`}>
+            <View className={`w-1 h-1 rounded-full ${isSelected ? 'bg-sky-500' : 'bg-sky-500/80'}`} />
+            <View className={`w-1 h-1 rounded-full ${isSelected ? 'bg-sky-500/70' : 'bg-sky-500/50'}`} />
+            <View className={`w-1 h-1 rounded-full ${isSelected ? 'bg-sky-500/50' : 'bg-sky-500/30'}`} />
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
-  const challenges = [
+  const [challenges, setChallenges] = useState([
     { 
       title: 'Early Bird',
-      description: 'Wake up before 7 AM for 5 days',
-      xp: 100,
-      progress: 3,
-      total: 5
+      description: 'Wake up before 07:00 for 1 day',
+      xp: 25,
+      progress: 0,
+      total: 1,
+      tier: 'BRONZE',
+      icon: '🌅',
+      completed: false,
+      nextTier: {
+        description: 'Wake up before 07:00 for 3 days',
+        xp: 50,
+        total: 3,
+        tier: 'SILVER'
+      }
     },
     {
       title: 'Consistent Schedule',
-      description: 'Keep the same sleep schedule for a week',
-      xp: 150,
+      description: 'Go to sleep at the same time for 4 days',
+      xp: 50,
       progress: 4,
-      total: 7
+      total: 4,
+      completed: true,
+      tier: 'SILVER',
+      icon: '🌙'
+    },
+    {
+      title: 'No Snooze Master',
+      description: "Don't hit snooze for 5 days",
+      xp: 100,
+      progress: 0,
+      total: 5,
+      tier: 'GOLD',
+      icon: '⏰'
+    },
+    {
+      title: 'Sleep Champion',
+      description: 'Sleep for 8+ hours for 7 days',
+      xp: 150,
+      progress: 0,
+      total: 7,
+      tier: 'DIAMOND',
+      icon: '👑'
     }
-  ];
+  ]);
+
+  const [showCelebration, setShowCelebration] = useState(false);
+  const celebrationAnim = useRef(new Animated.Value(0)).current;
+  const ringAnim = useRef(new Animated.Value(0)).current;
+  const xpAnim = useRef(new Animated.Value(0)).current;
+
+  const handleCollectReward = (index) => {
+    setShowCelebration(true);
+    
+    // Reset animations
+    celebrationAnim.setValue(0);
+    ringAnim.setValue(0);
+    xpAnim.setValue(0);
+
+    // Run celebration animation sequence
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(celebrationAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(ringAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.sequence([
+          Animated.delay(200),
+          Animated.spring(xpAnim, {
+            toValue: 1,
+            tension: 40,
+            friction: 7,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]),
+      Animated.delay(1200),
+      Animated.timing(celebrationAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setTimeout(() => {
+        setChallenges(prev => prev.map((challenge, i) => {
+          if (i === index && challenge.nextTier) {
+            return {
+              ...challenge,
+              description: challenge.nextTier.description,
+              xp: challenge.nextTier.xp,
+              total: challenge.nextTier.total,
+              tier: challenge.nextTier.tier,
+              progress: 0,
+              completed: false,
+              nextTier: null
+            };
+          }
+          return challenge;
+        }));
+        setShowCelebration(false);
+      }, 200);
+    });
+  };
+
+  const CelebrationOverlay = () => (
+    <View className="absolute inset-0" pointerEvents="box-none">
+      {/* Background */}
+      <Animated.View 
+        className="absolute inset-0 bg-black"
+        style={{
+          opacity: celebrationAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 0.8],
+          }),
+        }}
+      />
+      
+      {/* Content Container */}
+      <View className="flex-1 items-center justify-center">
+        <Animated.View
+          className="items-center"
+          style={{
+            opacity: celebrationAnim,
+            transform: [
+              {
+                scale: celebrationAnim.interpolate({
+                  inputRange: [0, 0.5, 1],
+                  outputRange: [0.9, 1.05, 1],
+                }),
+              },
+            ],
+          }}
+        >
+          {/* Rest of the content stays the same... */}
+          <View className="relative mb-6">
+            <Animated.View
+              className="absolute inset-0 items-center justify-center"
+              style={{
+                transform: [
+                  {
+                    scale: ringAnim.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: [0.8, 1.4, 1.2],
+                    }),
+                  },
+                ],
+                opacity: ringAnim.interpolate({
+                  inputRange: [0, 0.2, 1],
+                  outputRange: [0, 1, 0],
+                }),
+              }}
+            >
+              <LinearGradient
+                colors={['rgba(56, 189, 248, 0.3)', 'rgba(56, 189, 248, 0)']}
+                className="w-24 h-24 rounded-full"
+              />
+            </Animated.View>
+            
+            <View className="bg-sky-500/10 rounded-full p-6 border border-sky-500/20">
+              <Text className="text-5xl">✨</Text>
+            </View>
+          </View>
+
+          <Animated.View
+            className="items-center"
+            style={{
+              opacity: xpAnim,
+              transform: [
+                {
+                  translateY: xpAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0],
+                  }),
+                },
+              ],
+            }}
+          >
+            <Text className="text-white text-2xl font-bold mb-3">
+              Challenge Complete
+            </Text>
+            <View className="bg-sky-500/10 px-6 py-2 rounded-full border border-sky-500/20">
+              <Text className="text-sky-400 text-xl font-semibold">+25 XP</Text>
+            </View>
+          </Animated.View>
+        </Animated.View>
+      </View>
+    </View>
+  );
 
   return (
     <LinearGradient 
@@ -155,6 +369,7 @@ export default function Tasks() {
           >
             {/* Days Selection */}
             <ScrollView 
+              ref={scrollViewRef}
               horizontal 
               showsHorizontalScrollIndicator={false}
               className="mb-6 -mx-1"
@@ -164,7 +379,6 @@ export default function Tasks() {
                   key={index}
                   index={index}
                   date={date}
-                  active={date.active}
                 />
               ))}
             </ScrollView>
@@ -251,18 +465,39 @@ export default function Tasks() {
             
             <View className="space-y-4">
               {challenges.map((challenge, index) => (
-                <View key={index} className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
+                <View 
+                  key={index} 
+                  className={`bg-gray-900/50 rounded-2xl p-4 border
+                    ${challenge.tier === 'DIAMOND' ? 'border-sky-400/30' :
+                      challenge.tier === 'GOLD' ? 'border-yellow-500/30' :
+                      challenge.tier === 'SILVER' ? 'border-gray-300/30' :
+                      'border-orange-700/30'}
+                  `}
+                >
                   <View className="flex-row justify-between items-start mb-2">
-                    <View>
-                      <Text className="text-base font-semibold text-gray-300 mb-1">
-                        {challenge.title}
-                      </Text>
+                    <View className="flex-1">
+                      <View className="flex-row items-center mb-1">
+                        <Text className="text-xl mr-2">{challenge.icon}</Text>
+                        <Text className="text-base font-semibold text-gray-300">
+                          {challenge.title}
+                        </Text>
+                      </View>
                       <Text className="text-sm text-gray-500">
                         {challenge.description}
                       </Text>
                     </View>
-                    <View className="bg-yellow-500/20 px-3 py-1 rounded-full">
-                      <Text className="text-yellow-400 font-medium">
+                    <View className={`px-3 py-1 rounded-full
+                      ${challenge.tier === 'DIAMOND' ? 'bg-sky-500/20' :
+                        challenge.tier === 'GOLD' ? 'bg-yellow-500/20' :
+                        challenge.tier === 'SILVER' ? 'bg-gray-300/20' :
+                        'bg-orange-700/20'}
+                    `}>
+                      <Text className={`font-medium
+                        ${challenge.tier === 'DIAMOND' ? 'text-sky-400' :
+                          challenge.tier === 'GOLD' ? 'text-yellow-400' :
+                          challenge.tier === 'SILVER' ? 'text-gray-300' :
+                          'text-orange-400'}
+                      `}>
                         +{challenge.xp} XP
                       </Text>
                     </View>
@@ -270,15 +505,30 @@ export default function Tasks() {
                   <View className="mt-3">
                     <View className="w-full h-2 bg-gray-800 rounded-full">
                       <View 
-                        className="h-2 bg-sky-500 rounded-full"
+                        className={`h-2 rounded-full
+                          ${challenge.tier === 'DIAMOND' ? 'bg-sky-500' :
+                            challenge.tier === 'GOLD' ? 'bg-yellow-500' :
+                            challenge.tier === 'SILVER' ? 'bg-gray-300' :
+                            'bg-orange-500'}
+                        `}
                         style={{ 
                           width: `${(challenge.progress / challenge.total) * 100}%` 
                         }}
                       />
                     </View>
-                    <Text className="text-right text-sm text-gray-500 mt-1">
-                      {challenge.progress}/{challenge.total}
-                    </Text>
+                    <View className="flex-row justify-between items-center mt-2">
+                      <Text className="text-sm text-gray-500">
+                        {challenge.progress}/{challenge.total}
+                      </Text>
+                      {challenge.completed && (
+                        <TouchableOpacity
+                          onPress={() => handleCollectReward(index)}
+                          className="bg-sky-500 px-4 py-1.5 rounded-full"
+                        >
+                          <Text className="text-white font-medium">Collect</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 </View>
               ))}
@@ -286,6 +536,7 @@ export default function Tasks() {
           </View>
         </ScrollView>
       </SafeAreaView>
+      {showCelebration && <CelebrationOverlay />}
     </LinearGradient>
   );
 }

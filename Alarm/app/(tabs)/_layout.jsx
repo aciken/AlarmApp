@@ -5,22 +5,59 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import icons from '../../constants/icons';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
-
-// import Purchases from 'react-native-purchases';
+import { useRouter } from 'expo-router';
+import Purchases from 'react-native-purchases';
 
 
 const TabsLayout = () => {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
-  // useEffect(() => {
-  //   if(Platform.OS === 'ios') {
-  //     Purchases.configure({apiKey: 'appl_QREOkhpBbXGDRXyYeCqXXvirAAA'});
-  //   } else if(Platform.OS === 'android') {
-  //     Purchases.configure({apiKey: 'appl_QREOkhpBbXGDRXyYeCqXXvirAAA'});
-  //   }
+  useEffect(() => {
+    const setupPurchases = async () => {
+      try {
+        if(Platform.OS === 'ios') {
+          await Purchases.configure({ apiKey: 'appl_QREOkhpBbXGDRXyYeCqXXvirAAA'});
+        } else {
+          await Purchases.configure({ apiKey: 'appl_QREOkhpBbXGDRXyYeCqXXvirAAA' });
+        }
 
-  //   Purchases.getOfferings().then(console.log);
-  // }, []);
+        const offerings = await Purchases.getOfferings();
+        console.log('RevenueCat Offerings:', offerings);
+        
+        // Check if user is premium
+        const customerInfo = await Purchases.getCustomerInfo();
+        const isPro = customerInfo.entitlements.active.Pro !== undefined;
+        console.log('User is premium:', isPro);
+        console.log('Customer Info:', customerInfo);
+
+        if(!isPro) {
+          router.push('utils/two');
+        } 
+
+        if (offerings.current) {
+          console.log('Current Offering:', {
+            identifier: offerings.current.identifier,
+            packages: offerings.current.availablePackages.map(pkg => ({
+              identifier: pkg.identifier,
+              product: {
+                title: pkg.product.title,
+                price: pkg.product.price,
+                priceString: pkg.product.priceString,
+                description: pkg.product.description
+              }
+            }))
+          });
+        } else {
+          console.log('No current offering available');
+        }
+      } catch (error) {
+        console.error('RevenueCat Error:', error);
+      }
+    };
+
+    setupPurchases();
+  }, []);
 
 
 

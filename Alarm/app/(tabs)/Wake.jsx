@@ -6,6 +6,9 @@ import BottomPopup from '../components/BottomPopup';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGlobalContext } from '../context/GlobalProvider';
 import { useRouter } from 'expo-router';
+// import Purchases from 'react-native-purchases';
+// import RevenueCatUI from 'react-native-purchases-ui';
+
 
 export default function Wake() {
   const router = useRouter();
@@ -13,10 +16,47 @@ export default function Wake() {
   const [showTimePickerPopup, setShowTimePickerPopup] = useState(false);
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [isWakeUpSet, setIsWakeUpSet] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   
   // Animations
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // useEffect(() => {
+  //   const setupPurchases = async () => {
+  //     try {
+  //       if(Platform.OS === 'ios') {
+  //         await Purchases.configure({ apiKey: 'appl_QREOkhpBbXGDRXyYeCqXXvirAAA'});
+  //       } else {
+  //         await Purchases.configure({ apiKey: 'appl_QREOkhpBbXGDRXyYeCqXXvirAAA' });
+  //       }
+
+  //       const offerings = await Purchases.getOfferings();
+  //       console.log('RevenueCat Offerings:', offerings);
+        
+  //       if (offerings.current) {
+  //         console.log('Current Offering:', {
+  //           identifier: offerings.current.identifier,
+  //           packages: offerings.current.availablePackages.map(pkg => ({
+  //             identifier: pkg.identifier,
+  //             product: {
+  //               title: pkg.product.title,
+  //               price: pkg.product.price,
+  //               priceString: pkg.product.priceString,
+  //               description: pkg.product.description
+  //             }
+  //           }))
+  //         });
+  //       } else {
+  //         console.log('No current offering available');
+  //       }
+  //     } catch (error) {
+  //       console.error('RevenueCat Error:', error);
+  //     }
+  //   };
+
+  //   setupPurchases();
+  // }, []);
 
   useEffect(() => {
     if (!user.wakeup.time) {
@@ -98,6 +138,13 @@ export default function Wake() {
       style={{ flex: 1 }}
     >
       <SafeAreaView className="flex-1">
+        {/* <TouchableOpacity
+          onPress={() => router.push('utils/two')}
+          className="absolute top-6 right-6 bg-sky-500/10 p-2 rounded-full border border-sky-500/20"
+        >
+          <Text className="text-2xl">⭐️</Text>
+        </TouchableOpacity> */}
+
         {/* Minimal Header */}
         <View className="px-4 pt-4">
           <View className="flex-row justify-between items-center mb-6">
@@ -282,6 +329,13 @@ export default function Wake() {
             </View>
           </BottomPopup>
         )}
+
+        {/* {showPaywall && (
+          <RevenueCatUI.Paywall 
+            visible={showPaywall}
+            onDismiss={() => setShowPaywall(false)}
+          />
+        )} */}
       </SafeAreaView>
     </LinearGradient>
   );

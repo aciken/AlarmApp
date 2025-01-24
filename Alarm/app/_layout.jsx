@@ -43,6 +43,7 @@ const RootLayout = () => {
           presentation: 'modal',
         }}
       />
+      <Stack.Screen name='utils/two' />
     </Stack>
     </GlobalProvider>
   );
