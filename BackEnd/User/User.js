@@ -15,7 +15,29 @@ const userSchema = new mongoose.Schema({
         gradualVolume: false,
         wakeUpChallange: null,
         alarmSound: null,
-    }}
+    }},
+    challenge: {type: Array, default: [
+        {
+            name: 'Early Bird',
+            level: 1,
+            completed: false,
+        },
+        {
+            name: 'Consistent Schedule',
+            level: 1,
+            completed: false,
+        },
+        {
+            name: 'No Snooze Master',
+            level: 1,
+            completed: false,
+        },
+        {
+            name: 'Sleep Champion',
+            level: 1,
+            completed: false,
+        }
+    ]}
 });
 
 const User = mongoose.model('User', userSchema);

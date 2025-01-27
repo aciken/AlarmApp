@@ -63,7 +63,7 @@ export default function WakeSetup() {
 
 
 
-    axios.put('https://f0c4-109-245-202-17.ngrok-free.app/savewakeup', {
+    axios.put('https://5d69-109-245-202-17.ngrok-free.app/savewakeup', {
       time: selectedTime,
       vibration: settings.vibration,
       gradualVolume: settings.gradualVolume,

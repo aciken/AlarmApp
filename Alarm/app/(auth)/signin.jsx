@@ -6,11 +6,12 @@ import { useState } from 'react';
 import axios from 'axios';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useGlobalContext } from '../context/GlobalProvider';
 
 
 
 export default function SignIn() {
-
+  const { user,setUser } = useGlobalContext();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
@@ -18,12 +19,14 @@ export default function SignIn() {
         if(email === '' || password === ''){
             alert('Please enter your email and password');
         } else {
-        axios.put('https://f0c4-109-245-202-17.ngrok-free.app/signin', {email, password})
+        axios.put('https://5d69-109-245-202-17.ngrok-free.app/signin', {email, password})
         .then((res) => {
             console.log(res.status);
             if(res.status == 200){
                 console.log('yes');
                 AsyncStorage.setItem('@user', JSON.stringify(res.data));
+                setUser(res.data);
+                router.back();
                 router.push('Wake');
             } else {
                 alert('Invalid email or password');

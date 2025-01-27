@@ -10,6 +10,7 @@ export default function PagesLayout() {
       <Stack.Screen name="WakeSetup" />
       <Stack.Screen name="SleepSetup" />
       <Stack.Screen name="CurrentSleep" />
+      <Stack.Screen name="SettingsPage" />
     </Stack>
   );
 }

@@ -156,52 +156,160 @@ export default function Tasks() {
     );
   };
 
-  const [challenges, setChallenges] = useState([
-    { 
-      title: 'Early Bird',
-      description: 'Wake up before 07:00 for 1 day',
-      xp: 25,
-      progress: 0,
-      total: 1,
-      tier: 'BRONZE',
-      icon: '🌅',
-      completed: false,
-      nextTier: {
-        description: 'Wake up before 07:00 for 3 days',
-        xp: 50,
-        total: 3,
-        tier: 'SILVER'
+  const getChallengeDetails = (name, level) => {
+    const challenges = {
+      'Early Bird': {
+        title: 'Early Bird',
+        description: 'Wake up before 7 AM', 
+        icon: '🌅',
+        tier: level === 1 ? 'BRONZE' : 
+              level === 2 ? 'SILVER' : 
+              level === 3 ? 'GOLD' : 'DIAMOND',
+        xp: level === 1 ? 25 : 
+            level === 2 ? 50 : 
+            level === 3 ? 100 :
+            level === 4 ? 150 : 
+            level === 5 ? 200 : 250,
+        total: level === 1 ? 1 : 
+               level === 2 ? 3 : 
+               level === 3 ? 5 :
+               level === 4 ? 7 : 
+               level === 5 ? 14 : 30
+      },
+      'Consistent Schedule': {
+        title: 'Consistent Schedule',
+        description: level === 1 ? 'Maintain same sleep schedule for 2 days in a row' :
+                    level === 2 ? 'Maintain same sleep schedule for 4 days in a row' :
+                    level === 3 ? 'Maintain same sleep schedule for 6 days in a row' :
+                    level === 4 ? 'Maintain same sleep schedule for 8 days in a row' :
+                    level === 5 ? 'Maintain same sleep schedule for 14 days in a row' :
+                    'Maintain same sleep schedule for 30 days in a row',
+        icon: '⏰',
+        tier: level === 1 ? 'BRONZE' : 
+              level === 2 ? 'SILVER' : 
+              level === 3 ? 'GOLD' : 'DIAMOND',
+        xp: level === 1 ? 25 : 
+            level === 2 ? 50 : 
+            level === 3 ? 100 :
+            level === 4 ? 150 : 
+            level === 5 ? 200 : 250,
+        total: level === 1 ? 2 : 
+               level === 2 ? 4 : 
+               level === 3 ? 6 :
+               level === 4 ? 8 : 
+               level === 5 ? 14 : 30
+      },
+      'No Snooze Master': {
+        title: 'No Snooze Master',
+        description: level === 1 ? 'Wake up without snoozing' :
+                    level === 2 ? 'Wake up without snoozing for 3 days' :
+                    level === 3 ? 'Wake up without snoozing for 5 days' :
+                    level === 4 ? 'Wake up without snoozing for 7 days' :
+                    level === 5 ? 'Wake up without snoozing for 14 days' :
+                    'Wake up without snoozing for 30 days',
+
+        icon: '🎯',
+        tier: level === 1 ? 'BRONZE' : 
+              level === 2 ? 'SILVER' : 
+              level === 3 ? 'GOLD' : 'DIAMOND',
+        xp: level === 1 ? 25 : 
+            level === 2 ? 50 : 
+            level === 3 ? 100 :
+            level === 4 ? 150 : 
+            level === 5 ? 200 : 250,
+        total: level === 1 ? 1 : 
+               level === 2 ? 3 : 
+               level === 3 ? 5 :
+               level === 4 ? 7 : 
+               level === 5 ? 14 : 30
+      },
+      'Sleep Champion': {
+        title: 'Sleep Champion',
+        description: 'Get 8+ hours of sleep',
+        icon: '👑',
+        tier: level === 1 ? 'BRONZE' : 
+              level === 2 ? 'SILVER' : 
+              level === 3 ? 'GOLD' : 'DIAMOND',
+        xp: level === 1 ? 25 : 
+            level === 2 ? 50 : 
+            level === 3 ? 100 :
+            level === 4 ? 150 : 
+            level === 5 ? 200 : 250,
+        total: level === 1 ? 1 : 
+               level === 2 ? 3 : 
+               level === 3 ? 5 :
+               level === 4 ? 7 : 
+               level === 5 ? 14 : 30
       }
-    },
-    {
-      title: 'Consistent Schedule',
-      description: 'Go to sleep at the same time for 4 days',
-      xp: 50,
-      progress: 4,
-      total: 4,
-      completed: true,
-      tier: 'SILVER',
-      icon: '🌙'
-    },
-    {
-      title: 'No Snooze Master',
-      description: "Don't hit snooze for 5 days",
-      xp: 100,
-      progress: 0,
-      total: 5,
-      tier: 'GOLD',
-      icon: '⏰'
-    },
-    {
-      title: 'Sleep Champion',
-      description: 'Sleep for 8+ hours for 7 days',
-      xp: 150,
-      progress: 0,
-      total: 7,
-      tier: 'DIAMOND',
-      icon: '👑'
-    }
-  ]);
+    };
+
+    return challenges[name] || null;
+  };
+
+
+  const checkChallengeProgress = (name, level) => {
+    if(name === 'Early Bird') {
+      return user.sleep.reduce((count, sleep) => {
+        const sleepTime = new Date(sleep.sleepEndTime);
+        return sleepTime.getHours() < 7 ? count + 1 : count;
+      }, 0);
+    }else if(name === 'Consistent Schedule') {
+      // Get only completed sleep sessions
+      const completedSessions = user.sleep.filter(sleep => sleep.sleepEndTime);
+      
+      // Sort by start time, most recent first
+      const sortedSessions = completedSessions.sort((a, b) => 
+        new Date(b.sleepStartTime) - new Date(a.sleepStartTime)
+      );
+
+      if (sortedSessions.length < 2) return 0;
+
+      let streak = 1;
+      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+      const FIFTEEN_MINUTES = 15 * 60 * 1000; // 15 minutes in milliseconds
+
+      // Start from most recent and compare with previous
+      for (let i = 0; i < sortedSessions.length - 1; i++) {
+        const currentStart = new Date(sortedSessions[i].sleepStartTime);
+        const prevStart = new Date(sortedSessions[i + 1].sleepStartTime);
+        
+        // Get time difference in milliseconds
+        const timeDiff = Math.abs(currentStart.getTime() - prevStart.getTime());
+        
+        // Check if sleep started at approximately same time (within 15 minutes) on consecutive days
+        if (Math.abs(timeDiff - TWENTY_FOUR_HOURS) <= FIFTEEN_MINUTES) {
+          streak++;
+        } else {
+          break;
+        }
+      }
+
+      return streak;
+    }else if (name === 'Sleep Champion'){
+      return user.sleep.reduce((count, sleep) => {
+        const sleepTime = new Date(sleep.sleepEndTime);
+        return sleepTime.getHours() >= 8 ? count + 1 : count;
+      }, 0);
+    }else return 0;
+
+  };
+
+  const [challenges, setChallenges] = useState(
+    user.challenge.map(challenge => {
+      const details = getChallengeDetails(challenge.name, challenge.level);
+      console.log(`${challenge.name} ${challenge.level}`,checkChallengeProgress(challenge.name, challenge.level));
+      return {
+        ...details,
+        progress: checkChallengeProgress(challenge.name, challenge.level),
+        completed: checkChallengeProgress(challenge.name, challenge.level) >= details.total,
+        nextTier: challenge.level < 4 ? {
+          ...getChallengeDetails(challenge.name, challenge.level + 1),
+          tier: challenge.level === 1 ? 'SILVER' : 
+                challenge.level === 2 ? 'GOLD' : 'DIAMOND'
+        } : null
+      };
+    })
+  );
 
   const [showCelebration, setShowCelebration] = useState(false);
   const celebrationAnim = useRef(new Animated.Value(0)).current;
