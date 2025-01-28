@@ -18,6 +18,7 @@ export default function SettingsPage() {
       await AsyncStorage.clear();
       setUser(null);
       setIsLogged(false);
+      router.back();
       router.replace('/');
     } catch (error) {
       console.log('Error logging out:', error);

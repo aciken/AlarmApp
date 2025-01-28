@@ -7,7 +7,13 @@ export default function PagesLayout() {
         headerShown: false,
       }}
     >
-      <Stack.Screen name="WakeSetup" />
+      <Stack.Screen name="WakeSetup"        
+      options={{
+          animation: 'slide_from_bottom',
+          animationEnabled: true,
+          contentStyle: { backgroundColor: '#f8fafc' },
+          presentation: 'modal',
+        }} />
       <Stack.Screen name="SleepSetup" />
       <Stack.Screen name="CurrentSleep" />
       <Stack.Screen name="SettingsPage" />

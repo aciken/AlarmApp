@@ -47,7 +47,7 @@ export default function SleepSetup() {
 
 
     console.log(user._id, selectedSound, new Date());
-    axios.put('https://5d69-109-245-202-17.ngrok-free.app/startsleep', {
+    axios.put('https://6483-109-245-202-17.ngrok-free.app/startsleep', {
       userId: user._id,
       sleepStartTime: new Date(),
       sleepId: sleepId,
@@ -80,16 +80,33 @@ export default function SleepSetup() {
 
         <ScrollView className="flex-1 px-4 pt-6">
           {/* Wake Up Time Display */}
-          <View className="bg-gray-800/40 rounded-2xl p-6 mb-8">
-            <Text className="text-gray-400 text-base mb-2">Wake up time set for</Text>
-            <Text className="text-white text-4xl font-bold">
-              {new Date(user.wakeup.time).toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-              })}
-            </Text>
-          </View>
+          <TouchableOpacity
+            onPress={() => router.push('/WakeSetup')}
+            className="bg-gray-800/40 rounded-2xl p-6 mb-8 border border-gray-700/50 active:opacity-80"
+            style={{
+              shadowColor: '#1e293b',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 5,
+            }}
+          >
+            <View className="flex-row items-center justify-between">
+              <View>
+                <Text className="text-gray-400 text-base mb-2">Wake up at</Text>
+                <Text className="text-white text-4xl font-bold">
+                  {new Date(user.wakeup.time).toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}
+                </Text>
+              </View>
+              <View className="bg-gray-700/30 rounded-full p-3">
+                <Text className="text-2xl">⏰</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
 
           {/* Sound Selection */}
           <Text className="text-white text-lg font-semibold mb-3">Sleep Sound</Text>

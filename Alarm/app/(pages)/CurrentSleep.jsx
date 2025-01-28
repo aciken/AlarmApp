@@ -79,7 +79,7 @@ export default function CurrentSleep() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    axios.put('https://5d69-109-245-202-17.ngrok-free.app/endsleep', {
+    axios.put('https://6483-109-245-202-17.ngrok-free.app/endsleep', {
       userId: user._id,
       sleepId: currentSleep._id,
       sleepEndTime: new Date()
@@ -98,6 +98,7 @@ export default function CurrentSleep() {
       style={{ flex: 1 }}
     >
       <SafeAreaView className="flex-1">
+        {/* Minimal Header */}
         <View className="flex-row items-center px-4 pt-2">
           <TouchableOpacity 
             onPress={() => router.back()}
@@ -105,53 +106,41 @@ export default function CurrentSleep() {
           >
             <Text className="text-2xl text-gray-400">←</Text>
           </TouchableOpacity>
+          <Text className="text-white text-lg font-medium ml-2">Sleep Session</Text>
         </View>
 
-        <View className="flex-1 justify-center px-6">
-          <View className="items-center">
+        <View className="flex-1 px-6">
+          {/* Main Content */}
+          <View className="flex-1 justify-center -mt-12">
             {/* Animated Moon */}
-            <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <Animated.View 
+              style={{ transform: [{ scale: pulseAnim }] }}
+              className="items-center mb-8"
+            >
               <LinearGradient
                 colors={['rgba(99, 102, 241, 0.2)', 'rgba(99, 102, 241, 0.1)']}
-                className="rounded-full p-8 mb-12"
+                className="rounded-full p-8"
               >
                 <Text className="text-7xl">💤</Text>
               </LinearGradient>
             </Animated.View>
 
-            {/* Time Display */}
-            <View className="bg-white/5 rounded-3xl p-6 mb-12 border border-white/10">
-              <View className="flex-row items-baseline justify-center">
-                <View className="items-center">
-                  <Text className="text-white text-6xl font-bold tracking-tight">
-                    {hours}
-                  </Text>
-                  <Text className="text-gray-400 text-xs mt-2">hours</Text>
-                </View>
-                <Text className="text-gray-500 text-4xl font-extralight mx-3 mb-4">:</Text>
-                <View className="items-center">
-                  <Text className="text-white text-6xl font-bold tracking-tight">
-                    {minutes}
-                  </Text>
-                  <Text className="text-gray-400 text-xs mt-2">minutes</Text>
-                </View>
-              </View>
-              <LinearGradient
-                colors={['#6366f1', '#3b82f6']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                className="px-4 py-1 rounded-full mt-4 mx-auto"
-              >
-                <Text className="text-white text-sm font-medium tracking-wide">Deep Sleep</Text>
-              </LinearGradient>
+            {/* Sleep Duration */}
+            <View className="items-center mb-8">
+              <Text className="text-gray-400 text-base mb-3">Sleep Duration</Text>
+              <Text className="text-white text-7xl font-bold tracking-tight">
+                {hours}
+                <Text className="text-gray-500 text-5xl font-light">:</Text>
+                {minutes}
+              </Text>
             </View>
 
-            {/* Time Info */}
-            <View className="bg-white/5 rounded-3xl p-6 mb-16 w-full border border-white/10">
-              <View className="flex-row justify-between mb-4">
+            {/* Sleep Info Card */}
+            <View className="bg-white/5 rounded-2xl p-5 border border-white/10">
+              <View className="flex-row justify-between items-center mb-6">
                 <View>
-                  <Text className="text-gray-400 text-sm mb-1">Started</Text>
-                  <Text className="text-white text-2xl font-semibold">
+                  <Text className="text-gray-400 text-sm">Started</Text>
+                  <Text className="text-white text-xl font-medium mt-1">
                     {new Date(currentSleep.sleepStartTime).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
@@ -159,37 +148,53 @@ export default function CurrentSleep() {
                     })}
                   </Text>
                 </View>
-                <View className="items-end">
-                  <Text className="text-gray-400 text-sm mb-1">Wake up</Text>
-                  <Text className="text-white text-2xl font-semibold">
-                    {new Date(user.wakeup.time).toLocaleTimeString('en-US', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      hour12: false
-                    })}
+                <View className="h-8 w-[1px] bg-gray-700" />
+                <View>
+                  <Text className="text-gray-400 text-sm">Wake up</Text>
+                  <Text className="text-white text-xl font-medium mt-1">
+                    {user?.wakeup?.time ? 
+                      new Date(user.wakeup.time).toLocaleTimeString('en-US', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                      }) : '--:--'
+                    }
                   </Text>
                 </View>
               </View>
-              <LinearGradient
-                colors={['rgba(99, 102, 241, 0.2)', 'rgba(59, 130, 246, 0.2)']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                className="h-1 rounded-full"
-              />
-            </View>
 
-            {/* End Sleep Button */}
+              {/* Sleep Progress */}
+              <View className="space-y-2">
+                <View className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+                  <LinearGradient
+                    colors={['#6366f1', '#3b82f6']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.min(Math.round((parseInt(hours) / 8) * 100), 100)}%` }}
+                  />
+                </View>
+                <Text className="text-gray-500 text-xs text-center">
+                  {Math.round((parseInt(hours) / 8) * 100)}% of target sleep
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* End Sleep Button - Fixed at bottom */}
+          <View className="pb-8">
             <TouchableOpacity 
               onPress={handleEndSleep}
-              className="items-center"
+              className="w-full"
             >
               <LinearGradient
                 colors={['rgba(239, 68, 68, 0.15)', 'rgba(239, 68, 68, 0.05)']}
-                className="rounded-full p-4 mb-2"
+                className="w-full py-4 rounded-xl border border-red-500/20"
               >
-                <Text className="text-3xl">⏰</Text>
+                <Text className="text-red-400 text-center font-medium text-lg">
+                  End Sleep Session
+                </Text>
               </LinearGradient>
-              <Text className="text-red-400/90 text-base font-medium">End Sleep</Text>
             </TouchableOpacity>
           </View>
         </View>
