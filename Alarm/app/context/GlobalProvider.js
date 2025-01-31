@@ -27,7 +27,7 @@ const GlobalProvider = ({ children }) => {
                 const parsedUser = JSON.parse(storedUser);
                 setLocalAlarms(parsedUser.alarms || []);
                 
-                axios.post('https://6483-109-245-202-17.ngrok-free.app/getUser', { id: parsedUser._id })
+                axios.post('https://4c00-109-245-202-17.ngrok-free.app/getUser', { id: parsedUser._id })
                     .then(res => {
                         console.log('User data:', res.data);
                         if(res.data == 'User not found'){

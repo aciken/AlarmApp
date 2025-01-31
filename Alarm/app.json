@@ -20,7 +20,9 @@
         "UIBackgroundModes": [
           "fetch",
           "remote-notification"
-        ]
+        ],
+        "NSPhotoLibraryUsageDescription": "The app needs access to your photos to set your profile picture.",
+        "NSCameraUsageDescription": "The app needs access to your camera to take profile pictures."
       }
     },
     "android": {
@@ -33,7 +35,10 @@
         "SCHEDULE_EXACT_ALARM",
         "USE_EXACT_ALARM",
         "RECEIVE_BOOT_COMPLETED",
-        "WAKE_LOCK"
+        "WAKE_LOCK",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -47,6 +52,13 @@
           "icon": "./assets/notification-icon.png",
           "color": "#ffffff",
           "sounds": ["./assets/alarm-sound.wav"]
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos to set your profile picture.",
+          "cameraPermission": "The app needs access to your camera to take profile pictures."
         }
       ]
     ],

@@ -3,9 +3,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState, useRef, useEffect } from 'react';
 import { useGlobalContext } from '../context/GlobalProvider';
+import { useRouter } from 'expo-router';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 export default function Tasks() {
-  const { user } = useGlobalContext();
+  const router = useRouter();
+  const { user,setUser } = useGlobalContext();
   const [selectedDay, setSelectedDay] = useState(null);
   const [dates, setDates] = useState([]);
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -287,8 +292,14 @@ export default function Tasks() {
       return streak;
     }else if (name === 'Sleep Champion'){
       return user.sleep.reduce((count, sleep) => {
-        const sleepTime = new Date(sleep.sleepEndTime);
-        return sleepTime.getHours() >= 8 ? count + 1 : count;
+        if (!sleep.sleepEndTime || !sleep.sleepStartTime) return count;
+        
+        const start = new Date(sleep.sleepStartTime);
+        const end = new Date(sleep.sleepEndTime);
+        const durationMs = end - start;
+        const durationHours = durationMs / (1000 * 60 * 60);
+        
+        return durationHours >= 8 ? count + 1 : count;
       }, 0);
     }else return 0;
 
@@ -318,6 +329,13 @@ export default function Tasks() {
 
   const handleCollectReward = (index) => {
     setShowCelebration(true);
+
+    setChallenges(prev => prev.map((challenge, i) => {
+      if (i === index) {
+        return { ...challenge, completed: false };
+      }
+      return challenge;
+    }));
     
     // Reset animations
     celebrationAnim.setValue(0);
@@ -354,29 +372,58 @@ export default function Tasks() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      setTimeout(() => {
-        setChallenges(prev => prev.map((challenge, i) => {
-          if (i === index && challenge.nextTier) {
+      axios.put('https://4c00-109-245-202-17.ngrok-free.app/nextChallenge', 
+        {
+          index: index,
+          challenge: challenges[index].name,
+          level: challenges[index].level + 1,
+          userId: user._id
+        }) 
+        .then(res => {
+          console.log(res.data);
+          setChallenges(res.data.challenge.map(challenge => {
+            const details = getChallengeDetails(challenge.name, challenge.level);
             return {
-              ...challenge,
-              description: challenge.nextTier.description,
-              xp: challenge.nextTier.xp,
-              total: challenge.nextTier.total,
-              tier: challenge.nextTier.tier,
-              progress: 0,
-              completed: false,
-              nextTier: null
+              ...details,
+              progress: checkChallengeProgress(challenge.name, challenge.level),
+              completed: checkChallengeProgress(challenge.name, challenge.level) >= details.total,
+              nextTier: challenge.level < 4 ? {
+                ...getChallengeDetails(challenge.name, challenge.level + 1),
+                tier: challenge.level === 1 ? 'SILVER' : 
+                      challenge.level === 2 ? 'GOLD' : 'DIAMOND'
+              } : null
             };
-          }
-          return challenge;
-        }));
-        setShowCelebration(false);
-      }, 200);
-    });
+          }));
+          setUser(res.data);
+          AsyncStorage.setItem('@user', JSON.stringify(res.data));
+        })
+        .catch(err => {
+          console.log(err);
+        })
+      })
+      // setTimeout(() => {
+      //   setChallenges(prev => prev.map((challenge, i) => {
+      //     if (i === index && challenge.nextTier) {
+      //       return {
+      //         ...challenge,
+      //         description: challenge.nextTier.description,
+      //         xp: challenge.nextTier.xp,
+      //         total: challenge.nextTier.total,
+      //         tier: challenge.nextTier.tier,
+      //         progress: 0,
+      //         completed: false,
+      //         nextTier: null
+      //       };
+      //     }
+      //     return challenge;
+      //   }));
+      //   setShowCelebration(false);
+      // }, 200);
+    
   };
 
   const CelebrationOverlay = () => (
-    <View className="absolute inset-0" pointerEvents="box-none">
+    <View className="absolute inset-0" pointerEvents="box-none" style={{ transform: [{ translateY: '50%' }] }}>
       {/* Background */}
       <Animated.View 
         className="absolute inset-0 bg-black"
@@ -389,7 +436,7 @@ export default function Tasks() {
       />
       
       {/* Content Container */}
-      <View className="flex-1 items-center justify-center">
+      <View className="absolute inset-0 flex-1 items-center justify-center">
         <Animated.View
           className="items-center"
           style={{
@@ -457,7 +504,7 @@ export default function Tasks() {
           </Animated.View>
         </Animated.View>
       </View>
-    </View>
+      </View>
   );
 
   return (
@@ -557,6 +604,15 @@ export default function Tasks() {
                 </View>
               </>
             )}
+
+            {/* Expand Button */}
+            <TouchableOpacity 
+              className="mt-4 items-center py-2 bg-gray-800/50 rounded-xl"
+              onPress={() => router.push('(pages)/AllSleeps')}
+            >
+              <Text className="text-sky-400 font-medium">Expand</Text>
+            </TouchableOpacity>
+
           </Animated.View>
 
           {/* Challenges Section */}
@@ -620,7 +676,7 @@ export default function Tasks() {
                             'bg-orange-500'}
                         `}
                         style={{ 
-                          width: `${(challenge.progress / challenge.total) * 100}%` 
+                          width: `${Math.min((challenge.progress / challenge.total) * 100, 100)}%` 
                         }}
                       />
                     </View>

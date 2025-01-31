@@ -19,7 +19,7 @@ export default function SignIn() {
         if(email === '' || password === ''){
             alert('Please enter your email and password');
         } else {
-        axios.put('https://6483-109-245-202-17.ngrok-free.app/signin', {email, password})
+        axios.put('https://4c00-109-245-202-17.ngrok-free.app/signin', {email, password})
         .then((res) => {
             console.log(res.status);
             if(res.status == 200){

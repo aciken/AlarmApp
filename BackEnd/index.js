@@ -15,6 +15,7 @@ const EditAlarm = require('./Alarms/EditAlarm');
 const StartSleep = require('./Sleep/StartSleep');
 const EndSleep = require('./Sleep/EndSleep');
 const SaveWakeup = require('./Wakeup/SaveWakeup');
+const NextChallenge = require('./Challenge/NextChallenge');
 
 app.get('/', (req, res) => {
     res.send('Hello World!');
@@ -30,6 +31,7 @@ app.put('/editAlarm', EditAlarm);
 app.put('/startSleep', StartSleep);
 app.put('/endSleep', EndSleep);
 app.put('/savewakeup', SaveWakeup);
+app.put('/nextChallenge', NextChallenge);
 
   app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);

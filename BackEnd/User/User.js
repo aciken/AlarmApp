@@ -37,7 +37,10 @@ const userSchema = new mongoose.Schema({
             level: 1,
             completed: false,
         }
-    ]}
+    ]},
+    xp: {type: Number, default: 0},
+    avatar: String,
+    socialId: String,
 });
 
 const User = mongoose.model('User', userSchema);

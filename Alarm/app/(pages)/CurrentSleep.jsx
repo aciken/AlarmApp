@@ -79,7 +79,7 @@ export default function CurrentSleep() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    axios.put('https://6483-109-245-202-17.ngrok-free.app/endsleep', {
+    axios.put('https://4c00-109-245-202-17.ngrok-free.app/endsleep', {
       userId: user._id,
       sleepId: currentSleep._id,
       sleepEndTime: new Date()

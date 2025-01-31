@@ -85,7 +85,7 @@ export default function WakeSetup() {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
 
-        axios.put('https://6483-109-245-202-17.ngrok-free.app/savewakeup', {
+        axios.put('https://4c00-109-245-202-17.ngrok-free.app/savewakeup', {
             time: selectedTime,
             vibration: settings.vibration,
             gradualVolume: settings.gradualVolume,
