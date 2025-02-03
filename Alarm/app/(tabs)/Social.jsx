@@ -8,54 +8,6 @@ import { useState, useEffect } from 'react';
 import BottomPopup from '../components/BottomPopup';
 import axios from 'axios';
 
-
-const calculateLevel = (xp) => {
-  const levels = [
-    { level: 1, min: 0, max: 99 },
-    { level: 2, min: 100, max: 199 },
-    { level: 3, min: 200, max: 299 },
-    { level: 4, min: 300, max: 499 },
-    { level: 5, min: 500, max: 749 },
-    { level: 6, min: 750, max: 999 },
-    { level: 7, min: 1000, max: 1499 },
-    { level: 8, min: 1500, max: 1999 },
-    { level: 9, min: 2000, max: 2899 },
-    { level: 10, min: 2900, max: 3699 },
-    { level: 11, min: 3700, max: Infinity }
-  ];
-
-  const currentLevel = levels.find(l => xp >= l.min && xp <= l.max);
-  const nextLevel = levels[currentLevel.level] || null;
-
-  return {
-    current: currentLevel.level,
-    currentMin: currentLevel.min,
-    currentMax: currentLevel.max,
-    nextMin: nextLevel?.min || null,
-    progress: nextLevel ? 
-      ((xp - currentLevel.min) / (currentLevel.max - currentLevel.min)) * 100 
-      : 100
-  };
-};
-
-const getSleepTitle = (level) => {
-  const titles = [
-    { level: 1, title: "Sleep Novice", emoji: "🌱" },
-    { level: 2, title: "Sleep Student", emoji: "📚" },
-    { level: 3, title: "Sleep Apprentice", emoji: "⭐" },
-    { level: 4, title: "Sleep Guardian", emoji: "🛡️" },
-    { level: 5, title: "Sleep Knight", emoji: "⚔️" },
-    { level: 6, title: "Sleep Warrior", emoji: "🔥" },
-    { level: 7, title: "Sleep Veteran", emoji: "🌟" },
-    { level: 8, title: "Sleep Expert", emoji: "💫" },
-    { level: 9, title: "Sleep Master", emoji: "👑" },
-    { level: 10, title: "Sleep Champion", emoji: "🏆" },
-    { level: 11, title: "Sleep Legend", emoji: "⚡" }
-  ];
-
-  return titles.find(t => t.level === level) || titles[0];
-};
-
 export default function Social() {
   const { setUser, setIsLogged, user } = useGlobalContext();
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,13 +26,6 @@ export default function Social() {
     }
   };
 
-  // Calculate level info
-  const levelInfo = calculateLevel(user.xp || 0);
-  const xpToNext = levelInfo.nextMin ? levelInfo.nextMin - user.xp : 0;
-
-  // Get title and emoji based on level
-  const { title, emoji } = getSleepTitle(levelInfo.current);
-
   // Generate random ID if not exists
   const socialId = user.socialId || Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -90,8 +35,6 @@ export default function Social() {
       setIsEditingName(false);
     }
   };
-
-
 
   const FriendCard = ({ friend }) => {
     const [friendData, setFriendData] = useState(null);
@@ -109,7 +52,13 @@ export default function Social() {
     if (!friendData) return null;
 
     return (
-      <View className="bg-gray-900/50 rounded-2xl p-4 mb-4 border border-gray-800/50">
+      <TouchableOpacity 
+        onPress={() => router.push({
+          pathname: "/FriendStats",
+          params: { friendId: friend }
+        })}
+        className="bg-gray-900/50 rounded-2xl p-4 mb-4 border border-gray-800/50"
+      >
         <View className="flex-row items-center">
           {friendData.avatar ? (
             <Image
@@ -143,11 +92,9 @@ export default function Social() {
             </View>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
-
-  
 
   return (
     <LinearGradient 
@@ -159,44 +106,8 @@ export default function Social() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 100 }}
         >
-          {/* Profile Stats */}
-          <View className="mx-4 mt-6 bg-gray-900/50 rounded-3xl p-6 shadow-sm border border-gray-800/50">
-            <View className="items-center">
-              <View className="bg-gray-800/50 rounded-full p-1.5 mb-4">
-                <View className="bg-gray-800 rounded-full p-5">
-                  <Text className="text-5xl">{emoji}</Text>
-                </View>
-              </View>
-              <Text className="text-2xl font-bold text-gray-200 mb-2">
-                {title}
-              </Text>
-              <View className="flex-row items-center mb-4">
-                <View className="bg-sky-500/20 px-3 py-1 rounded-full">
-                  <Text className="text-sky-400 font-medium">Level {levelInfo.current}</Text>
-                </View>
-                <Text className="text-gray-500 mx-2">•</Text>
-                <Text className="text-gray-500">{user.xp || 0} XP</Text>
-              </View>
-              <View className="w-full">
-                <View className="flex-row justify-between mb-2">
-                  <Text className="text-gray-400 text-sm">Progress</Text>
-                  <Text className="text-gray-400 text-sm">
-                    {levelInfo.nextMin ? `${xpToNext} XP to level ${levelInfo.current + 1}` : 'Max Level'}
-                  </Text>
-                </View>
-                <View className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
-                  <View 
-                    className="h-2 bg-sky-500 rounded-full"
-                    style={{ width: `${levelInfo.progress}%` }}
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-
           {/* Profile Section */}
           <View className="mx-4 mt-8">
-            <Text className="text-lg font-semibold text-gray-200 mb-4">Profile</Text>
             <View className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800/50">
               {/* Profile Picture */}
               <View className="items-center mb-6">
@@ -265,7 +176,7 @@ export default function Social() {
             </View>
           </View>
 
-          {/* Friends */}
+          {/* Friends Section */}
           <View className="px-4 mt-8">
             <View className="flex-row justify-between items-center mb-4">
               <Text className="text-lg font-semibold text-gray-200">
@@ -279,7 +190,7 @@ export default function Social() {
               </TouchableOpacity>
             </View>
 
-            {/* Existing Friends List */}
+            {/* Friends List */}
             {user.friends?.list?.length > 0 ? (
               user.friends.list.map((friend, index) => (
                 <FriendCard key={index} friend={friend} />
@@ -299,8 +210,6 @@ export default function Social() {
           </View>
         </ScrollView>
       </SafeAreaView>
-
-
     </LinearGradient>
   );
 }

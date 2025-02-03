@@ -44,6 +44,14 @@ const RootLayout = () => {
         }}
       />
       <Stack.Screen name='utils/two' />
+      <Stack.Screen
+        name="modal/ai"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+          animation: 'slide_from_bottom',
+        }}
+      />
     </Stack>
     </GlobalProvider>
   );

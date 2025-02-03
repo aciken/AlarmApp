@@ -615,87 +615,130 @@ export default function Tasks() {
 
           </Animated.View>
 
-          {/* Challenges Section */}
+          {/* Replace the Challenges section with Sleep Stats */}
           <View className="px-4 mt-8">
-            <View className="flex-row justify-between items-center mb-4">
-              <Text className="text-lg font-semibold text-gray-300">
-                Challenges
-              </Text>
-              <View className="flex-row items-center">
-                <View className="w-5 h-5 bg-yellow-500/80 rounded-full mr-2" />
-                <Text className="text-gray-400 font-medium">1,250 XP</Text>
+            <Text className="text-lg font-semibold text-gray-200 mb-4">Sleep Stats</Text>
+            
+            {/* Stats Grid */}
+            <View className="flex-row flex-wrap">
+              {/* Average Sleep Time */}
+              <View className="w-1/2 pr-2 mb-4">
+                <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
+                  <Text className="text-gray-400 text-sm mb-1">Average Sleep</Text>
+                  <Text className="text-sky-400 text-2xl font-bold">
+                    {user.averageSleep || '0h 0m'}
+                  </Text>
+                  <Text className="text-gray-500 text-xs mt-1">Last 7 days</Text>
+                </View>
+              </View>
+
+              {/* Sleep Debt */}
+              <View className="w-1/2 pl-2 mb-4">
+                <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
+                  <Text className="text-gray-400 text-sm mb-1">Sleep Debt</Text>
+                  <Text className="text-rose-400 text-2xl font-bold">
+                    {user.sleepDebt || '0h'}
+                  </Text>
+                  <Text className="text-gray-500 text-xs mt-1">This week</Text>
+                </View>
+              </View>
+
+              {/* Best Streak */}
+              <View className="w-1/2 pr-2 mb-4">
+                <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
+                  <Text className="text-gray-400 text-sm mb-1">Best Streak</Text>
+                  <Text className="text-amber-400 text-2xl font-bold">
+                    🏆 {user.bestStreak || 0}
+                  </Text>
+                  <Text className="text-gray-500 text-xs mt-1">Days in a row</Text>
+                </View>
+              </View>
+
+              {/* Total Sleep Time */}
+              <View className="w-1/2 pl-2 mb-4">
+                <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
+                  <Text className="text-gray-400 text-sm mb-1">Total Sleep</Text>
+                  <Text className="text-emerald-400 text-2xl font-bold">
+                    {user.totalSleep || '0h'}
+                  </Text>
+                  <Text className="text-gray-500 text-xs mt-1">All time</Text>
+                </View>
               </View>
             </View>
-            
-            <View className="space-y-4">
-              {challenges.map((challenge, index) => (
-                <View 
-                  key={index} 
-                  className={`bg-gray-900/50 rounded-2xl p-4 border
-                    ${challenge.tier === 'DIAMOND' ? 'border-sky-400/30' :
-                      challenge.tier === 'GOLD' ? 'border-yellow-500/30' :
-                      challenge.tier === 'SILVER' ? 'border-gray-300/30' :
-                      'border-orange-700/30'}
-                  `}
-                >
-                  <View className="flex-row justify-between items-start mb-2">
-                    <View className="flex-1">
-                      <View className="flex-row items-center mb-1">
-                        <Text className="text-xl mr-2">{challenge.icon}</Text>
-                        <Text className="text-base font-semibold text-gray-300">
-                          {challenge.title}
-                        </Text>
-                      </View>
-                      <Text className="text-sm text-gray-500">
-                        {challenge.description}
-                      </Text>
-                    </View>
-                    <View className={`px-3 py-1 rounded-full
-                      ${challenge.tier === 'DIAMOND' ? 'bg-sky-500/20' :
-                        challenge.tier === 'GOLD' ? 'bg-yellow-500/20' :
-                        challenge.tier === 'SILVER' ? 'bg-gray-300/20' :
-                        'bg-orange-700/20'}
-                    `}>
-                      <Text className={`font-medium
-                        ${challenge.tier === 'DIAMOND' ? 'text-sky-400' :
-                          challenge.tier === 'GOLD' ? 'text-yellow-400' :
-                          challenge.tier === 'SILVER' ? 'text-gray-300' :
-                          'text-orange-400'}
-                      `}>
-                        +{challenge.xp} XP
-                      </Text>
-                    </View>
+
+            {/* Sleep Quality Chart */}
+            <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50 mb-4">
+              <Text className="text-gray-400 text-sm mb-3">Sleep Quality</Text>
+              <View className="flex-row justify-between items-center">
+                <View className="items-center flex-1">
+                  <View className="w-full h-24 bg-gray-800/50 rounded-lg overflow-hidden">
+                    <View 
+                      className="bg-sky-500 w-full"
+                      style={{ 
+                        height: `${(user.deepSleep || 0) * 100}%`,
+                        marginTop: 'auto'
+                      }}
+                    />
                   </View>
-                  <View className="mt-3">
-                    <View className="w-full h-2 bg-gray-800 rounded-full">
-                      <View 
-                        className={`h-2 rounded-full
-                          ${challenge.tier === 'DIAMOND' ? 'bg-sky-500' :
-                            challenge.tier === 'GOLD' ? 'bg-yellow-500' :
-                            challenge.tier === 'SILVER' ? 'bg-gray-300' :
-                            'bg-orange-500'}
-                        `}
-                        style={{ 
-                          width: `${Math.min((challenge.progress / challenge.total) * 100, 100)}%` 
-                        }}
-                      />
-                    </View>
-                    <View className="flex-row justify-between items-center mt-2">
-                      <Text className="text-sm text-gray-500">
-                        {challenge.progress}/{challenge.total}
-                      </Text>
-                      {challenge.completed && (
-                        <TouchableOpacity
-                          onPress={() => handleCollectReward(index)}
-                          className="bg-sky-500 px-4 py-1.5 rounded-full"
-                        >
-                          <Text className="text-white font-medium">Collect</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  </View>
+                  <Text className="text-gray-400 text-xs mt-2">Deep</Text>
+                  <Text className="text-white text-sm font-medium">
+                    {Math.round((user.deepSleep || 0) * 100)}%
+                  </Text>
                 </View>
-              ))}
+                <View className="items-center flex-1 mx-2">
+                  <View className="w-full h-24 bg-gray-800/50 rounded-lg overflow-hidden">
+                    <View 
+                      className="bg-sky-500 w-full"
+                      style={{ 
+                        height: `${(user.lightSleep || 0) * 100}%`,
+                        marginTop: 'auto'
+                      }}
+                    />
+                  </View>
+                  <Text className="text-gray-400 text-xs mt-2">Light</Text>
+                  <Text className="text-white text-sm font-medium">
+                    {Math.round((user.lightSleep || 0) * 100)}%
+                  </Text>
+                </View>
+                <View className="items-center flex-1">
+                  <View className="w-full h-24 bg-gray-800/50 rounded-lg overflow-hidden">
+                    <View 
+                      className="bg-sky-500 w-full"
+                      style={{ 
+                        height: `${(user.rem || 0) * 100}%`,
+                        marginTop: 'auto'
+                      }}
+                    />
+                  </View>
+                  <Text className="text-gray-400 text-xs mt-2">REM</Text>
+                  <Text className="text-white text-sm font-medium">
+                    {Math.round((user.rem || 0) * 100)}%
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Sleep Schedule */}
+            <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
+              <Text className="text-gray-400 text-sm mb-3">Sleep Schedule</Text>
+              <View className="flex-row justify-between items-center mb-2">
+                <Text className="text-gray-400">Average Bedtime</Text>
+                <Text className="text-white font-medium">
+                  {user.averageBedtime || '00:00'}
+                </Text>
+              </View>
+              <View className="flex-row justify-between items-center mb-2">
+                <Text className="text-gray-400">Average Wake Time</Text>
+                <Text className="text-white font-medium">
+                  {user.averageWakeTime || '00:00'}
+                </Text>
+              </View>
+              <View className="flex-row justify-between items-center">
+                <Text className="text-gray-400">Sleep Consistency</Text>
+                <Text className="text-white font-medium">
+                  {user.sleepConsistency || 0}%
+                </Text>
+              </View>
             </View>
           </View>
         </ScrollView>

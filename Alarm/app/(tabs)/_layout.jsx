@@ -62,10 +62,15 @@ const TabsLayout = () => {
   const handleTabPress = () => {
     try {
       // Pattern: [wait time, vibration time]
-      Vibration.vibrate([0, 25]);
+      // Vibration.vibrate([0, 10]);
     } catch (error) {
       console.log('Vibration error:', error);
     }
+  };
+
+  const handleAIPress = () => {
+    handleTabPress();
+    router.push('/modal/ai'); // This will open AI as a modal
   };
 
   return (
@@ -110,15 +115,31 @@ const TabsLayout = () => {
               </View>
             ),
             listeners: {
-              tabPress: (e) => {
-                handleTabPress();
-              }
+              tabPress: handleTabPress
             }
           }}
         />
 
         <Tabs.Screen 
           name="Tasks"
+          options={{
+            tabBarIcon: ({color}) => (
+              <View className="w-8 h-8 items-center justify-center">
+                <Image 
+                  source={icons.stats}
+                  style={{ width: 24, height: 24, tintColor: color }}
+                  resizeMode="contain"
+                />
+              </View>
+            ),
+            listeners: {
+              tabPress: handleTabPress
+            }
+          }}
+        />
+
+        <Tabs.Screen 
+          name="Sleep"
           options={{
             tabBarIcon: ({color}) => (
               <View className="w-8 h-8 items-center justify-center">
@@ -150,6 +171,30 @@ const TabsLayout = () => {
             listeners: {
               tabPress: handleTabPress
             }
+          }}
+        />
+
+        <Tabs.Screen 
+          name="AI_Tab"
+          listeners={{
+            tabPress: (e) => {
+              // Prevent default tab navigation
+              e.preventDefault();
+              handleTabPress();
+              // Open modal instead
+              router.push('/modal/ai');
+            },
+          }}
+          options={{
+            tabBarIcon: ({color}) => (
+              <View className="w-8 h-8 items-center justify-center">
+                <Image 
+                  source={icons.ai}
+                  style={{ width: 24, height: 24, tintColor: color }}
+                  resizeMode="contain"
+                />
+              </View>
+            ),
           }}
         />
       </Tabs>
