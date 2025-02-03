@@ -4,8 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useGlobalContext } from '../context/GlobalProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import BottomPopup from '../components/BottomPopup';
+import axios from 'axios';
+
 
 const calculateLevel = (xp) => {
   const levels = [
@@ -89,180 +91,63 @@ export default function Social() {
     }
   };
 
-  const friends = [
-    {
-      name: 'Sarah M.',
-      streak: 15,
-      lastSleep: '8h 12m',
-      level: 24,
-      avatar: 'https://i.pravatar.cc/100?img=47'
-    },
-    {
-      name: 'Mike R.',
-      streak: 7,
-      lastSleep: '7h 45m',
-      level: 18,
-      avatar: 'https://i.pravatar.cc/100?img=68'
-    },
-    {
-      name: 'Emma W.',
-      streak: 21,
-      lastSleep: '8h 30m',
-      level: 32,
-      avatar: 'https://i.pravatar.cc/100?img=45'
-    }
-  ];
 
-  const achievements = [
-    {
-      title: 'Perfect Week',
-      description: 'Maintained sleep schedule for 7 days',
-      date: '2 days ago',
-      icon: '🌟'
-    },
-    {
-      title: 'Early Riser',
-      description: 'Woke up before 7 AM for 5 consecutive days',
-      date: '4 days ago',
-      icon: '🌅'
-    }
-  ];
 
-  const pendingRequests = [
-    {
-      name: 'John D.',
-      level: 15,
-      avatar: 'https://i.pravatar.cc/100?img=52'
-    },
-    {
-      name: 'Alice K.',
-      level: 8,
-      avatar: 'https://i.pravatar.cc/100?img=44'
-    }
-  ];
+  const FriendCard = ({ friend }) => {
+    const [friendData, setFriendData] = useState(null);
 
-  const suggestedFriends = [
-    {
-      name: 'David L.',
-      level: 19,
-      avatar: 'https://i.pravatar.cc/100?img=53',
-      mutualFriends: 3
-    },
-    {
-      name: 'Sophie R.',
-      level: 12,
-      avatar: 'https://i.pravatar.cc/100?img=41',
-      mutualFriends: 2
-    }
-  ];
+    useEffect(() => {
+      axios.post('https://6eea-109-245-206-230.ngrok-free.app/getUser', {
+        id: friend
+      }).then((res) => {
+        setFriendData(res.data);
+      }).catch(err => {
+        console.log(err);
+      });
+    }, [friend]);
 
-  const FriendCard = ({ friend }) => (
-    <View className="bg-gray-900/50 rounded-2xl p-4 mb-4 border border-gray-800/50">
-      <View className="flex-row items-center">
-        <Image
-          source={{ uri: friend.avatar }}
-          className="w-12 h-12 rounded-full"
-        />
-        <View className="flex-1 ml-4">
-          <View className="flex-row justify-between items-center">
-            <Text className="text-lg font-semibold text-gray-200">
-              {friend.name}
-            </Text>
-            <View className="bg-yellow-500/20 px-3 py-1 rounded-full">
-              <Text className="text-yellow-400 font-medium">
-                Lvl {friend.level}
+    if (!friendData) return null;
+
+    return (
+      <View className="bg-gray-900/50 rounded-2xl p-4 mb-4 border border-gray-800/50">
+        <View className="flex-row items-center">
+          {friendData.avatar ? (
+            <Image
+              source={{ uri: friendData.avatar }}
+              className="w-12 h-12 rounded-full"
+            />
+          ) : (
+            <View className="w-12 h-12 rounded-full bg-gray-800 items-center justify-center">
+              <Text className="text-gray-400 text-lg">
+                {friendData.name?.[0]?.toUpperCase() || '?'}
               </Text>
             </View>
-          </View>
-          <View className="flex-row items-center mt-1">
-            <View className="flex-row items-center">
-              <Text className="text-sky-400 font-medium">🔥 {friend.streak} days</Text>
-              <Text className="text-gray-600 mx-2">•</Text>
-              <Text className="text-gray-500">{friend.lastSleep} sleep</Text>
+          )}
+          <View className="flex-1 ml-4">
+            <View className="flex-row justify-between items-center">
+              <Text className="text-lg font-semibold text-gray-200">
+                {friendData.name}
+              </Text>
+              <View className="bg-yellow-500/20 px-3 py-1 rounded-full">
+                <Text className="text-yellow-400 font-medium">
+                  Lvl {Math.floor(friendData.xp / 100) + 1}
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row items-center mt-1">
+              <View className="flex-row items-center">
+                <Text className="text-sky-400 font-medium">🔥 {friendData.streak || 0} days</Text>
+                <Text className="text-gray-600 mx-2">•</Text>
+                <Text className="text-gray-500">{friendData.lastSleep || '0h 0m'} sleep</Text>
+              </View>
             </View>
           </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
-  const AddFriendsContent = () => (
-    <View className="flex-1 px-4">
-      <Text className="text-lg font-semibold text-white mb-6">Add Friends</Text>
-      
-      {/* Search Bar */}
-      <View className="bg-gray-800/50 rounded-xl p-3 mb-6 border border-gray-700/50">
-        <TextInput
-          placeholder="Search by username..."
-          placeholderTextColor="#64748b"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          className="text-white text-base"
-        />
-      </View>
-
-      {/* Friend Requests */}
-      {pendingRequests.length > 0 && (
-        <View className="mb-6">
-          <Text className="text-sky-400 text-sm font-medium mb-3">
-            PENDING REQUESTS
-          </Text>
-          {pendingRequests.map((request, index) => (
-            <View key={index} className="bg-gray-900/50 rounded-xl p-4 mb-3 border border-gray-800/50">
-              <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center flex-1">
-                  <Image
-                    source={{ uri: request.avatar }}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <View className="ml-3 flex-1">
-                    <Text className="text-white font-medium">{request.name}</Text>
-                    <Text className="text-gray-400 text-sm">Level {request.level}</Text>
-                  </View>
-                </View>
-                <View className="flex-row">
-                  <TouchableOpacity className="bg-sky-500 px-4 py-1.5 rounded-full mr-2">
-                    <Text className="text-white font-medium">Accept</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity className="bg-gray-800 px-4 py-1.5 rounded-full">
-                    <Text className="text-gray-400 font-medium">Decline</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Suggested Friends */}
-      <View>
-        <Text className="text-sky-400 text-sm font-medium mb-3">
-          SUGGESTED FRIENDS
-        </Text>
-        {suggestedFriends.map((friend, index) => (
-          <View key={index} className="bg-gray-900/50 rounded-xl p-4 mb-3 border border-gray-800/50">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center flex-1">
-                <Image
-                  source={{ uri: friend.avatar }}
-                  className="w-10 h-10 rounded-full"
-                />
-                <View className="ml-3 flex-1">
-                  <Text className="text-white font-medium">{friend.name}</Text>
-                  <Text className="text-gray-400 text-sm">
-                    {friend.mutualFriends} mutual friends • Level {friend.level}
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity className="bg-sky-500/20 px-4 py-1.5 rounded-full">
-                <Text className="text-sky-400 font-medium">Add</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
+  
 
   return (
     <LinearGradient 
@@ -277,28 +162,35 @@ export default function Social() {
           {/* Profile Stats */}
           <View className="mx-4 mt-6 bg-gray-900/50 rounded-3xl p-6 shadow-sm border border-gray-800/50">
             <View className="items-center">
-              <View className="bg-gray-800/50 rounded-full p-1 mb-4">
-                <View className="bg-gray-800 rounded-full p-4">
-                  <Text className="text-4xl">{emoji}</Text>
+              <View className="bg-gray-800/50 rounded-full p-1.5 mb-4">
+                <View className="bg-gray-800 rounded-full p-5">
+                  <Text className="text-5xl">{emoji}</Text>
                 </View>
               </View>
-              <Text className="text-2xl font-bold text-gray-200 mb-1">
+              <Text className="text-2xl font-bold text-gray-200 mb-2">
                 {title}
               </Text>
-              <Text className="text-gray-500 mb-4">
-                Level {levelInfo.current} • {user.xp || 0} XP
-              </Text>
-              <View className="w-full h-2 bg-gray-800 rounded-full">
-                <View 
-                  className="h-2 bg-sky-500 rounded-full"
-                  style={{ width: `${levelInfo.progress}%` }}
-                />
+              <View className="flex-row items-center mb-4">
+                <View className="bg-sky-500/20 px-3 py-1 rounded-full">
+                  <Text className="text-sky-400 font-medium">Level {levelInfo.current}</Text>
+                </View>
+                <Text className="text-gray-500 mx-2">•</Text>
+                <Text className="text-gray-500">{user.xp || 0} XP</Text>
               </View>
-              {levelInfo.nextMin && (
-                <Text className="text-sm text-gray-500 mt-2">
-                  {xpToNext} XP to level {levelInfo.current + 1}
-                </Text>
-              )}
+              <View className="w-full">
+                <View className="flex-row justify-between mb-2">
+                  <Text className="text-gray-400 text-sm">Progress</Text>
+                  <Text className="text-gray-400 text-sm">
+                    {levelInfo.nextMin ? `${xpToNext} XP to level ${levelInfo.current + 1}` : 'Max Level'}
+                  </Text>
+                </View>
+                <View className="w-full h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <View 
+                    className="h-2 bg-sky-500 rounded-full"
+                    style={{ width: `${levelInfo.progress}%` }}
+                  />
+                </View>
+              </View>
             </View>
           </View>
 
@@ -308,43 +200,49 @@ export default function Social() {
             <View className="bg-gray-900/50 rounded-2xl p-6 border border-gray-800/50">
               {/* Profile Picture */}
               <View className="items-center mb-6">
-                <View className="w-24 h-24 rounded-full bg-gray-800 items-center justify-center">
-                  <Text className="text-gray-400 text-4xl">
-                    {(user.name?.[0] || '?').toUpperCase()}
-                  </Text>
+                <View className="relative">
+                  <View className="w-24 h-24 rounded-full bg-gray-800 items-center justify-center">
+                    <Text className="text-gray-400 text-4xl font-medium">
+                      {(user.name?.[0] || '?').toUpperCase()}
+                    </Text>
+                  </View>
+                  <View className="absolute -bottom-1 -right-1 bg-gray-900 rounded-full p-1">
+                    <View className="bg-gray-800 rounded-full p-1.5">
+                      <Text className="text-sky-400 text-lg">📷</Text>
+                    </View>
+                  </View>
                 </View>
-                <Text className="text-sky-400 text-sm mt-2">Change Photo</Text>
               </View>
 
               {/* Name */}
               <View className="mb-6">
-                <Text className="text-gray-400 text-sm mb-2">Name</Text>
+                <Text className="text-gray-400 text-sm mb-2 font-medium">NAME</Text>
                 {isEditingName ? (
                   <View className="flex-row items-center">
                     <TextInput
                       value={newName}
                       onChangeText={setNewName}
-                      className="flex-1 bg-gray-800/50 rounded-xl px-4 py-2 text-white text-lg"
+                      className="flex-1 bg-gray-800/50 rounded-xl px-4 py-2.5 text-white text-base"
                       placeholderTextColor="#64748b"
                       placeholder="Enter your name"
                     />
                     <TouchableOpacity 
                       onPress={handleNameSave}
-                      className="ml-2 bg-sky-500 px-4 py-2 rounded-xl"
+                      className="ml-2 bg-sky-500 px-4 py-2.5 rounded-xl"
                     >
                       <Text className="text-white font-medium">Save</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
-                  <View className="flex-row justify-between items-center">
-                    <Text className="text-white text-lg">
+                  <View className="flex-row justify-between items-center bg-gray-800/30 rounded-xl px-4 py-2.5">
+                    <Text className="text-white text-base font-medium">
                       {user.name || 'Set your name'}
                     </Text>
                     <TouchableOpacity 
                       onPress={() => setIsEditingName(true)}
                       className="bg-sky-500/20 px-3 py-1 rounded-full"
                     >
-                      <Text className="text-sky-400">Edit</Text>
+                      <Text className="text-sky-400 font-medium">Edit</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -352,15 +250,15 @@ export default function Social() {
 
               {/* Social ID */}
               <View>
-                <Text className="text-gray-400 text-sm mb-2">Social ID</Text>
-                <View className="flex-row justify-between items-center bg-gray-800/50 rounded-xl px-4 py-3">
-                  <Text className="text-white text-lg font-medium">
+                <Text className="text-gray-400 text-sm mb-2 font-medium">SOCIAL ID</Text>
+                <View className="flex-row justify-between items-center bg-gray-800/30 rounded-xl px-4 py-2.5">
+                  <Text className="text-white text-base font-medium">
                     #{socialId}
                   </Text>
                   <TouchableOpacity 
                     className="bg-gray-700/50 px-3 py-1 rounded-full"
                   >
-                    <Text className="text-gray-300">Copy</Text>
+                    <Text className="text-gray-300 font-medium">Copy</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -374,7 +272,7 @@ export default function Social() {
                 Friends
               </Text>
               <TouchableOpacity 
-                onPress={() => setShowAddFriends(true)}
+                onPress={() => router.push('/AddFriends')}
                 className="bg-sky-500/20 px-4 py-1.5 rounded-full"
               >
                 <Text className="text-sky-400 font-medium">Add Friends</Text>
@@ -382,21 +280,27 @@ export default function Social() {
             </View>
 
             {/* Existing Friends List */}
-            {friends.map((friend, index) => (
-              <FriendCard key={index} friend={friend} />
-            ))}
+            {user.friends?.list?.length > 0 ? (
+              user.friends.list.map((friend, index) => (
+                <FriendCard key={index} friend={friend} />
+              ))
+            ) : (
+              <View className="items-center py-8 bg-gray-900/30 mx-2 rounded-2xl border border-gray-800/30">
+                <Text className="text-gray-400 text-lg mb-2">No friends yet</Text>
+                <Text className="text-gray-500 text-sm">Add friends to compare sleep stats and motivate each other!</Text>
+                <TouchableOpacity 
+                  onPress={() => router.push('/AddFriends')}
+                  className="mt-4 bg-sky-500/20 px-6 py-2 rounded-full"
+                >
+                  <Text className="text-sky-400 font-medium">Find Friends</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </ScrollView>
       </SafeAreaView>
 
-      {/* Add Friends Bottom Sheet */}
-      <BottomPopup
-        visible={showAddFriends}
-        onClose={() => setShowAddFriends(false)}
-        height={0.8}
-      >
-        <AddFriendsContent />
-      </BottomPopup>
+
     </LinearGradient>
   );
 }

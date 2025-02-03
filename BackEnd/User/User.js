@@ -40,7 +40,12 @@ const userSchema = new mongoose.Schema({
     ]},
     xp: {type: Number, default: 0},
     avatar: String,
-    socialId: String,
+    socialId: {type: String, default: () => Math.floor(10000000 + Math.random() * 90000000).toString()},
+    friends: {type: Object, default: {
+        list: [],
+        requests: [],
+        pending: [],
+    }},
 });
 
 const User = mongoose.model('User', userSchema);

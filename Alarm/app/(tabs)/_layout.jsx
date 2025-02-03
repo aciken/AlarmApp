@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image } from 'react-native';
+import { View, Image, Vibration } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import icons from '../../constants/icons';
@@ -59,8 +59,14 @@ const TabsLayout = () => {
   //   setupPurchases();
   // }, []);
 
-
-
+  const handleTabPress = () => {
+    try {
+      // Pattern: [wait time, vibration time]
+      Vibration.vibrate([0, 25]);
+    } catch (error) {
+      console.log('Vibration error:', error);
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#0f172a' }}>
@@ -91,7 +97,8 @@ const TabsLayout = () => {
           headerShown: false,
         }}
       >
-          <Tabs.Screen name="Wake"
+        <Tabs.Screen 
+          name="Wake"
           options={{
             tabBarIcon: ({color}) => (
               <View className="w-8 h-8 items-center justify-center">
@@ -101,11 +108,17 @@ const TabsLayout = () => {
                   resizeMode="contain"
                 />
               </View>
-            )
+            ),
+            listeners: {
+              tabPress: (e) => {
+                handleTabPress();
+              }
+            }
           }}
         />
 
-        <Tabs.Screen name="Tasks"
+        <Tabs.Screen 
+          name="Tasks"
           options={{
             tabBarIcon: ({color}) => (
               <View className="w-8 h-8 items-center justify-center">
@@ -115,10 +128,15 @@ const TabsLayout = () => {
                   resizeMode="contain"
                 />
               </View>
-            )
+            ),
+            listeners: {
+              tabPress: handleTabPress
+            }
           }}
         />
-        <Tabs.Screen name="Social"
+
+        <Tabs.Screen 
+          name="Social"
           options={{
             tabBarIcon: ({color}) => (
               <View className="w-8 h-8 items-center justify-center">
@@ -128,7 +146,10 @@ const TabsLayout = () => {
                   resizeMode="contain"
                 />
               </View>
-            )
+            ),
+            listeners: {
+              tabPress: handleTabPress
+            }
           }}
         />
       </Tabs>

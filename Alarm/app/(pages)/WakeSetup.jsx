@@ -85,7 +85,7 @@ export default function WakeSetup() {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
 
-        axios.put('https://4c00-109-245-202-17.ngrok-free.app/savewakeup', {
+        axios.put('https://6eea-109-245-206-230.ngrok-free.app/savewakeup', {
             time: selectedTime,
             vibration: settings.vibration,
             gradualVolume: settings.gradualVolume,
@@ -120,7 +120,7 @@ export default function WakeSetup() {
                         onPress={() => router.back()}
                         className="w-10 h-10 items-center justify-center"
                     >
-                        <Text className="text-2xl text-gray-400">←</Text>
+                        <Text className="text-2xl text-gray-400">↓</Text>
                     </TouchableOpacity>
                     <Text className="text-xl font-semibold text-white ml-2">Wake Up Settings</Text>
                 </View>

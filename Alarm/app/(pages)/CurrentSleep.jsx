@@ -79,7 +79,7 @@ export default function CurrentSleep() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    axios.put('https://4c00-109-245-202-17.ngrok-free.app/endsleep', {
+    axios.put('https://6eea-109-245-206-230.ngrok-free.app/endsleep', {
       userId: user._id,
       sleepId: currentSleep._id,
       sleepEndTime: new Date()
@@ -104,7 +104,7 @@ export default function CurrentSleep() {
             onPress={() => router.back()}
             className="w-10 h-10 items-center justify-center"
           >
-            <Text className="text-2xl text-gray-400">←</Text>
+            <Text className="text-2xl text-gray-400">↓</Text>
           </TouchableOpacity>
           <Text className="text-white text-lg font-medium ml-2">Sleep Session</Text>
         </View>

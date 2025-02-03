@@ -66,11 +66,7 @@ export default function SettingsPage() {
             onPress={() => router.back()}
             className="mr-4"
           >
-            <Image 
-              source={require('../../assets/icons/back.png')}
-              className="w-6 h-6"
-              style={{ tintColor: '#94a3b8' }}
-            />
+            <Text className="text-2xl text-gray-400">↓</Text>
           </TouchableOpacity>
           <Text className="text-xl font-semibold text-white">Settings</Text>
         </View>

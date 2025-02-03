@@ -72,7 +72,7 @@ export default function AllSleeps() {
               onPress={() => router.back()}
               className="w-10 h-10 items-center justify-center"
             >
-              <Text className="text-2xl text-gray-400">←</Text>
+              <Text className="text-2xl text-gray-400">↓</Text>
             </TouchableOpacity>
             <Text className="text-white text-lg font-medium ml-2">Sleep History</Text>
           </View>

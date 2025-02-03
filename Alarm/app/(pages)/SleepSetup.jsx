@@ -47,7 +47,7 @@ export default function SleepSetup() {
 
 
     console.log(user._id, selectedSound, new Date());
-    axios.put('https://4c00-109-245-202-17.ngrok-free.app/startsleep', {
+    axios.put('https://6eea-109-245-206-230.ngrok-free.app/startsleep', {
       userId: user._id,
       sleepStartTime: new Date(),
       sleepId: sleepId,
@@ -73,7 +73,7 @@ export default function SleepSetup() {
             onPress={() => router.back()}
             className="w-10 h-10 items-center justify-center"
           >
-            <Text className="text-2xl text-gray-400">←</Text>
+            <Text className="text-2xl text-gray-400">↓</Text>
           </TouchableOpacity>
           <Text className="text-xl font-semibold text-white ml-2">Start Sleep</Text>
         </View>

@@ -372,7 +372,7 @@ export default function Tasks() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      axios.put('https://4c00-109-245-202-17.ngrok-free.app/nextChallenge', 
+      axios.put('https://6eea-109-245-206-230.ngrok-free.app/nextChallenge', 
         {
           index: index,
           challenge: challenges[index].name,
