@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import BottomPopup from '../components/BottomPopup';
 import axios from 'axios';
+import { Feather } from '@expo/vector-icons';
 
 export default function Social() {
   const { setUser, setIsLogged, user } = useGlobalContext();
@@ -51,6 +52,47 @@ export default function Social() {
 
     if (!friendData) return null;
 
+    // Calculate last sleep duration and time
+    const getLastSleepInfo = () => {
+      if (!friendData.sleep || friendData.sleep.length === 0) {
+        return { duration: null, timeAgo: null };
+      }
+
+      const lastSleep = friendData.sleep[friendData.sleep.length - 1];
+      if (!lastSleep.sleepStartTime || !lastSleep.sleepEndTime) {
+        return { duration: null, timeAgo: null };
+      }
+
+      const startTime = new Date(lastSleep.sleepStartTime);
+      const endTime = new Date(lastSleep.sleepEndTime);
+      const duration = endTime - startTime;
+      
+      // Calculate duration in hours and minutes
+      const hours = Math.floor(duration / (1000 * 60 * 60));
+      const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+      
+      // Calculate how long ago
+      const now = new Date();
+      const hoursAgo = Math.floor((now - endTime) / (1000 * 60 * 60));
+      
+      let timeAgo;
+      if (hoursAgo < 1) {
+        timeAgo = 'Just now';
+      } else if (hoursAgo < 24) {
+        timeAgo = `${hoursAgo}h ago`;
+      } else {
+        const daysAgo = Math.floor(hoursAgo / 24);
+        timeAgo = `${daysAgo}d ago`;
+      }
+
+      return {
+        duration: `${hours}h ${minutes}m`,
+        timeAgo
+      };
+    };
+
+    const sleepInfo = getLastSleepInfo();
+
     return (
       <TouchableOpacity 
         onPress={() => router.push({
@@ -83,11 +125,26 @@ export default function Social() {
                 </Text>
               </View>
             </View>
-            <View className="flex-row items-center mt-1">
+            <View className="flex-row items-center justify-between mt-1">
               <View className="flex-row items-center">
-                <Text className="text-sky-400 font-medium">🔥 {friendData.streak || 0} days</Text>
+                <View className="flex-row items-center">
+                  <Text className="text-sky-400 font-medium">
+                    <Text style={{ fontSize: 14 }}>🔥</Text> {friendData.streak || 0} days
+                  </Text>
+                </View>
                 <Text className="text-gray-600 mx-2">•</Text>
-                <Text className="text-gray-500">{friendData.lastSleep || '0h 0m'} sleep</Text>
+                {sleepInfo.duration ? (
+                  <View className="flex-row items-center">
+                    <View className="w-4 h-4 rounded-full bg-slate-700/50 items-center justify-center mr-1">
+                      <Feather name="moon" size={12} color="#94a3b8" />
+                    </View>
+                    <Text className="text-gray-400">{sleepInfo.duration}</Text>
+                    <Text className="text-gray-600 mx-1">•</Text>
+                    <Text className="text-gray-500">{sleepInfo.timeAgo}</Text>
+                  </View>
+                ) : (
+                  <Text className="text-gray-500">No recent sleep</Text>
+                )}
               </View>
             </View>
           </View>

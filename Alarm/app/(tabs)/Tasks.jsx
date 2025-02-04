@@ -6,15 +6,62 @@ import { useGlobalContext } from '../context/GlobalProvider';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Feather } from '@expo/vector-icons';
 
+const DAYS = 7; // Number of days to show
+
+const calculateSleepScore = (sleepData) => {
+  if (!sleepData) return 0;
+  
+  const duration = new Date(sleepData.sleepEndTime) - new Date(sleepData.sleepStartTime);
+  const hours = duration / (1000 * 60 * 60);
+  
+  // Base score on duration (ideal: 7-9 hours)
+  let score = 100;
+  if (hours < 7) score -= (7 - hours) * 15;
+  if (hours > 9) score -= (hours - 9) * 10;
+  
+  // Adjust for sleep time (ideal: 22:00-23:00)
+  const bedTime = new Date(sleepData.sleepStartTime).getHours();
+  if (bedTime < 22 || bedTime > 23) {
+    score -= Math.abs(bedTime - 22.5) * 5;
+  }
+  
+  return Math.max(Math.min(Math.round(score), 100), 0);
+};
 
 export default function Tasks() {
   const router = useRouter();
-  const { user,setUser } = useGlobalContext();
-  const [selectedDay, setSelectedDay] = useState(null);
-  const [dates, setDates] = useState([]);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const scrollViewRef = useRef(null);
+  const { user, setUser } = useGlobalContext();
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const celebrationAnim = useRef(new Animated.Value(0)).current;
+  const ringAnim = useRef(new Animated.Value(0)).current;
+  const xpAnim = useRef(new Animated.Value(0)).current;
+  
+  // Generate last 7 days
+  const getDays = () => {
+    const days = [];
+    for (let i = DAYS - 1; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const sleepData = user.sleep?.find(s => {
+        if (!s.sleepEndTime) return false;
+        const endDate = new Date(s.sleepEndTime);
+        return endDate.toDateString() === date.toDateString();
+      });
+      
+      days.push({
+        date: date,
+        sleepData: sleepData,
+        score: sleepData ? calculateSleepScore(sleepData) : null
+      });
+    }
+    return days;
+  };
+
+  const days = getDays();
+  const selectedDayData = days.find(d => d.date.toISOString().split('T')[0] === selectedDate);
 
   const calculateSleepForDate = (date) => {
     if (!user.sleep || user.sleep.length === 0) return null;
@@ -48,6 +95,7 @@ export default function Tasks() {
     };
   };
 
+  // Remove or comment out this useEffect that uses setDates
   useEffect(() => {
     // Generate last 21 days
     const generateDates = () => {
@@ -73,92 +121,16 @@ export default function Tasks() {
         });
       }
 
-      setDates(datesArray);
-      setSelectedDay(20); // Select today (last index)
+      // Remove this line since setDates is not defined
+      // setDates(datesArray);
+      // setSelectedDay(20); // Remove this line too
     };
 
     generateDates();
   }, [user.sleep]);
 
-  // Scroll to today when component mounts
-  useEffect(() => {
-    if (scrollViewRef.current) {
-      // Wait for layout to complete
-      setTimeout(() => {
-        scrollViewRef.current.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, []);
-
   const handleDayPress = (index) => {
-    setSelectedDay(index);
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 4,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const DayButton = ({ date, index }) => {
-    const isSelected = index === selectedDay;
-    
-    return (
-      <TouchableOpacity
-        onPress={() => handleDayPress(index)}
-        className={`w-16 h-20 rounded-xl items-center justify-center mx-1 
-          ${date.isToday 
-            ? isSelected
-              ? 'bg-sky-500/20 border-2 border-sky-500/50 shadow-lg shadow-sky-500/20' 
-              : 'bg-sky-500/10 border-2 border-sky-500/30'
-            : isSelected
-              ? 'bg-sky-500/20 border border-sky-500/30'
-              : 'border border-gray-800 bg-gray-900/60'}
-        `}
-      >
-        <Text 
-          className={`text-xs mb-1
-            ${date.isToday 
-              ? isSelected
-                ? 'text-sky-400 font-semibold'
-                : 'text-sky-400 font-medium'
-              : isSelected 
-                ? 'text-sky-400 font-medium'
-                : 'text-gray-500'
-            }
-          `}
-        >
-          {date.weekday}
-        </Text>
-        <Text 
-          className={`text-xl
-            ${date.isToday 
-              ? isSelected
-                ? 'text-white font-bold'
-                : 'text-white font-semibold'
-              : isSelected
-                ? 'text-white font-semibold'
-                : 'text-gray-400 font-medium'
-            }
-          `}
-        >
-          {date.label}
-        </Text>
-        {date.isToday && (
-          <View className={`absolute bottom-2 flex-row space-x-1 ${isSelected ? 'opacity-100' : 'opacity-70'}`}>
-            <View className={`w-1 h-1 rounded-full ${isSelected ? 'bg-sky-500' : 'bg-sky-500/80'}`} />
-            <View className={`w-1 h-1 rounded-full ${isSelected ? 'bg-sky-500/70' : 'bg-sky-500/50'}`} />
-            <View className={`w-1 h-1 rounded-full ${isSelected ? 'bg-sky-500/50' : 'bg-sky-500/30'}`} />
-          </View>
-        )}
-      </TouchableOpacity>
-    );
+    setSelectedDate(days[index].date.toISOString().split('T')[0]);
   };
 
   const getChallengeDetails = (name, level) => {
@@ -322,11 +294,6 @@ export default function Tasks() {
     })
   );
 
-  const [showCelebration, setShowCelebration] = useState(false);
-  const celebrationAnim = useRef(new Animated.Value(0)).current;
-  const ringAnim = useRef(new Animated.Value(0)).current;
-  const xpAnim = useRef(new Animated.Value(0)).current;
-
   const handleCollectReward = (index) => {
     setShowCelebration(true);
 
@@ -401,24 +368,6 @@ export default function Tasks() {
           console.log(err);
         })
       })
-      // setTimeout(() => {
-      //   setChallenges(prev => prev.map((challenge, i) => {
-      //     if (i === index && challenge.nextTier) {
-      //       return {
-      //         ...challenge,
-      //         description: challenge.nextTier.description,
-      //         xp: challenge.nextTier.xp,
-      //         total: challenge.nextTier.total,
-      //         tier: challenge.nextTier.tier,
-      //         progress: 0,
-      //         completed: false,
-      //         nextTier: null
-      //       };
-      //     }
-      //     return challenge;
-      //   }));
-      //   setShowCelebration(false);
-      // }, 200);
     
   };
 
@@ -580,231 +529,257 @@ export default function Tasks() {
   const sleepStats = calculateSleepStats() || {};
 
   return (
-    <LinearGradient 
-      colors={['#0f172a', '#1e293b']} 
-      style={{ flex: 1 }}
-    >
+    <LinearGradient colors={['#0f172a', '#1e293b']} style={{ flex: 1 }}>
       <SafeAreaView className="flex-1">
-        <ScrollView 
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100 }}
-        >
-          {/* Sleep Stats Card */}
-          <Animated.View 
-            className="mx-4 mt-6 bg-gray-900/50 rounded-3xl p-6 shadow-sm border border-gray-800/50"
-            style={{ transform: [{ scale: scaleAnim }] }}
-          >
-            {/* Days Selection */}
-            <ScrollView 
-              ref={scrollViewRef}
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              className="mb-6 -mx-1"
-            >
-              {dates.map((date, index) => (
-                <DayButton 
-                  key={index}
-                  index={index}
-                  date={date}
-                />
-              ))}
-            </ScrollView>
+        <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
+          {/* Header */}
+          <View className="px-6 pt-6 pb-4">
+            <Text className="text-2xl font-bold text-white">Sleep Analytics </Text>
+            <Text className="text-gray-400 mt-1">Track your sleep patterns and progress</Text>
+          </View>
 
-            {/* Sleep Time and Stats */}
-            {dates[selectedDay] && (
-              <>
-                <View className="items-center mb-8">
-                  <View className="bg-gray-800/50 px-8 py-3 rounded-2xl">
-                    <Text className="text-xl font-bold text-white">
-                      {dates[selectedDay].sleepTime}
-                      {dates[selectedDay].sleepTime !== '-' && (
-                        <Text className="text-sky-400 font-medium">
-                          {' '}/ {dates[selectedDay].targetTime}
-                        </Text>
-                      )}
+          {/* Day Selector - Improved Design */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            className="px-4 mb-6"
+          >
+            {days.map((day, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => setSelectedDate(day.date.toISOString().split('T')[0])}
+                className="mr-3"
+              >
+                <LinearGradient
+                  colors={selectedDate === day.date.toISOString().split('T')[0] 
+                    ? ['#0ea5e9', '#0284c7']
+                    : ['rgba(30, 41, 59, 0.5)', 'rgba(15, 23, 42, 0.5)']}
+                  className={`rounded-2xl p-4 w-24 h-[104px] justify-between ${
+                    selectedDate === day.date.toISOString().split('T')[0] 
+                      ? 'border-2 border-sky-400/30'
+                      : 'border border-slate-700/50'
+                  }`}
+                  style={{
+                    shadowColor: selectedDate === day.date.toISOString().split('T')[0] ? '#0ea5e9' : '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 8,
+                    elevation: 5
+                  }}
+                >
+                  <View>
+                    <Text className={`text-sm mb-1 ${
+                      selectedDate === day.date.toISOString().split('T')[0] 
+                        ? 'text-sky-200'
+                        : 'text-gray-400'
+                    }`}>
+                      {day.date.toLocaleDateString('en-US', { weekday: 'short' })}
+                    </Text>
+                    <Text className={`text-2xl font-bold ${
+                      selectedDate === day.date.toISOString().split('T')[0] 
+                        ? 'text-white' 
+                        : 'text-gray-300'
+                    }`}>
+                      {day.date.getDate()}
                     </Text>
                   </View>
-                </View>
+                  
+                  <View className={`rounded-full px-2.5 py-1 ${
+                    selectedDate === day.date.toISOString().split('T')[0]
+                      ? 'bg-sky-400/20'
+                      : 'bg-slate-700/30'
+                  }`}>
+                    <Text className="text-xs font-semibold" 
+                          style={{ 
+                            color: day.score ? (
+                              day.score > 80 ? '#4ade80' : 
+                              day.score > 60 ? '#fbbf24' : '#ef4444'
+                            ) : '#94a3b8'
+                          }}>
+                      {day.score ? `${day.score}%` : '--'}
+                    </Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
-                {/* Daily Stats */}
-                <View className="space-y-4">
-                  {[
-                    { 
-                      label: 'Bedtime',
-                      value: dates[selectedDay].bedTime,
-                      description: 'When you went to sleep',
-                      icon: '🌙'
-                    },
-                    { 
-                      label: 'Wake up',
-                      value: dates[selectedDay].wokeUpOnTime ? 'On time' : 'Snoozed',
-                      description: 'Alarm response',
-                      icon: '⏰'
-                    },
-                    { 
-                      label: 'Duration',
-                      value: dates[selectedDay].sleepTime,
-                      description: `Target: ${dates[selectedDay].targetTime}`,
-                      icon: '⭐️'
-                    }
-                  ].map((metric, index) => (
-                    <View key={index}>
-                      <View className="flex-row items-center justify-between mb-2">
-                        <View className="flex-row items-center">
-                          <Text className="text-2xl mr-3">{metric.icon}</Text>
-                          <View>
-                            <Text className="text-base font-medium text-gray-300">
-                              {metric.label}
+          {/* Daily Sleep Score Card */}
+          {selectedDayData && (
+            <View className="px-4 mb-6">
+              <View className="bg-slate-800/40 backdrop-blur-xl rounded-3xl border border-slate-700/50">
+                <LinearGradient
+                  colors={['rgba(14, 165, 233, 0.1)', 'transparent']}
+                  className="p-6 rounded-3xl"
+                >
+                  {/* Score Circle */}
+                  <View className="items-center mb-6">
+                    <View className="w-32 h-32 rounded-full border-8 border-sky-500/20 items-center justify-center">
+                      <View className="items-center">
+                        {selectedDayData.sleepData ? (
+                          <>
+                            <Text className="text-4xl font-bold text-white mb-1">
+                              {selectedDayData.score}
                             </Text>
-                            <Text className="text-sm text-gray-500">
-                              {metric.description}
+                            <Text className="text-sky-300 text-sm font-medium">
+                              {selectedDayData.score > 80 ? 'Excellent' : 
+                               selectedDayData.score > 60 ? 'Good' : 'Poor'}
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <Text className="text-4xl font-bold text-gray-500">--</Text>
+                            <Text className="text-gray-400 text-sm font-medium mt-1">No Sleep Data</Text>
+                          </>
+                        )}
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Sleep Metrics */}
+                  <View className="mt-6">
+                    {/* Main Stats Row */}
+                    <View className="flex-row mb-4">
+                      <View className="flex-1 mr-2">
+                        <View className="bg-slate-800/60 rounded-2xl p-4">
+                          <View className="flex-row items-center mb-3">
+                            <View className="w-8 h-8 rounded-lg bg-sky-500/10 items-center justify-center">
+                              <Feather name="clock" size={16} color="#0ea5e9" />
+                            </View>
+                            <Text className="text-sky-400 text-sm font-medium ml-2">Total Sleep</Text>
+                          </View>
+                          <Text className="text-white text-2xl font-semibold">
+                            {selectedDayData.sleepData ? 
+                              `${Math.floor((new Date(selectedDayData.sleepData.sleepEndTime) - 
+                              new Date(selectedDayData.sleepData.sleepStartTime)) / (1000 * 60 * 60))}h ${
+                              Math.floor(((new Date(selectedDayData.sleepData.sleepEndTime) - 
+                              new Date(selectedDayData.sleepData.sleepStartTime)) % (1000 * 60 * 60)) / (1000 * 60))}m`
+                              : "--"
+                            }
+                          </Text>
+                          <Text className="text-gray-400 text-sm mt-1">
+                            {selectedDayData.sleepData ? 'Duration' : 'No data available'}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View className="flex-1 ml-2">
+                        <View className="bg-slate-800/60 rounded-2xl p-4">
+                          <View className="flex-row items-center mb-3">
+                            <View className="w-8 h-8 rounded-lg bg-emerald-500/10 items-center justify-center">
+                              <Feather name="target" size={16} color="#10b981" />
+                            </View>
+                            <Text className="text-emerald-400 text-sm font-medium ml-2">Sleep Goal</Text>
+                          </View>
+                          <Text className="text-white text-2xl font-semibold">
+                            {selectedDayData.sleepData ? 
+                              Math.floor((new Date(selectedDayData.sleepData.sleepEndTime) - 
+                              new Date(selectedDayData.sleepData.sleepStartTime)) / (1000 * 60 * 60)) >= 8
+                              ? 'Achieved'
+                              : 'Missed'
+                              : "--"
+                            }
+                          </Text>
+                          <Text className="text-gray-400 text-sm mt-1">
+                            {selectedDayData.sleepData ? '8 hours target' : 'No data available'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Time Details */}
+                    <View className="bg-slate-800/60 rounded-2xl">
+                      <View className="p-4 border-b border-slate-700/50">
+                        <View className="flex-row items-center justify-between">
+                          <View className="flex-row items-center">
+                            <View className="w-8 h-8 rounded-lg bg-slate-700/50 items-center justify-center">
+                              <Feather name="moon" size={16} color="#94a3b8" />
+                            </View>
+                            <View className="ml-3">
+                              <Text className="text-gray-400 text-sm">Bedtime</Text>
+                              <Text className="text-white text-base font-medium mt-0.5">
+                                {selectedDayData.sleepData ? 
+                                  new Date(selectedDayData.sleepData.sleepStartTime)
+                                    .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                                  : "--"
+                                }
+                              </Text>
+                            </View>
+                          </View>
+                          <View className="bg-slate-700/30 px-3 py-1 rounded-full">
+                            <Text className="text-gray-400 text-sm">
+                              {selectedDayData.sleepData ? "Yesterday" : "--"}
                             </Text>
                           </View>
                         </View>
-                        <Text className={`text-lg font-bold ${
-                          metric.label === 'Wake up' 
-                            ? metric.value === 'On time' 
-                              ? 'text-emerald-400'
-                              : 'text-amber-400'
-                            : 'text-gray-300'
-                        }`}>
-                          {metric.value}
-                        </Text>
+                      </View>
+
+                      <View className="p-4">
+                        <View className="flex-row items-center justify-between">
+                          <View className="flex-row items-center">
+                            <View className="w-8 h-8 rounded-lg bg-slate-700/50 items-center justify-center">
+                              <Feather name="sun" size={16} color="#94a3b8" />
+                            </View>
+                            <View className="ml-3">
+                              <Text className="text-gray-400 text-sm">Wake Time</Text>
+                              <Text className="text-white text-base font-medium mt-0.5">
+                                {selectedDayData.sleepData ? 
+                                  new Date(selectedDayData.sleepData.sleepEndTime)
+                                    .toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                                  : "--"
+                                }
+                              </Text>
+                            </View>
+                          </View>
+                          <View className={`px-3 py-1 rounded-full ${
+                            selectedDayData.sleepData ? 'bg-emerald-500/10' : 'bg-slate-700/30'
+                          }`}>
+                            <Text className={
+                              selectedDayData.sleepData ? 'text-emerald-400' : 'text-gray-400'
+                            }>
+                              {selectedDayData.sleepData ? "On Schedule" : "--"}
+                            </Text>
+                          </View>
+                        </View>
                       </View>
                     </View>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {/* Expand Button */}
-            <TouchableOpacity 
-              className="mt-4 items-center py-2 bg-gray-800/50 rounded-xl"
-              onPress={() => router.push('(pages)/AllSleeps')}
-            >
-              <Text className="text-sky-400 font-medium">Expand</Text>
-            </TouchableOpacity>
-
-          </Animated.View>
-
-          {/* Replace the Challenges section with Sleep Stats */}
-          <View className="px-4 mt-8">
-            <Text className="text-lg font-semibold text-gray-200 mb-4">Sleep Stats</Text>
-            
-            {/* Stats Grid */}
-            <View className="flex-row flex-wrap">
-              {/* Average Sleep Time */}
-              <View className="w-1/2 pr-2 mb-4">
-                <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
-                  <Text className="text-gray-400 text-sm mb-1">Average Sleep</Text>
-                  <Text className="text-sky-400 text-2xl font-bold">
-                    {sleepStats.averageSleep || '0h 0m'}
-                  </Text>
-                  <Text className="text-gray-500 text-xs mt-1">Last 7 days</Text>
-                </View>
-              </View>
-
-              {/* Sleep Debt */}
-              <View className="w-1/2 pl-2 mb-4">
-                <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
-                  <Text className="text-gray-400 text-sm mb-1">Sleep Debt</Text>
-                  <Text className="text-rose-400 text-2xl font-bold">
-                    {sleepStats.sleepDebt || '0h'}
-                  </Text>
-                  <Text className="text-gray-500 text-xs mt-1">This week</Text>
-                </View>
-              </View>
-
-              {/* Best Streak */}
-              <View className="w-1/2 pr-2 mb-4">
-                <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
-                  <Text className="text-gray-400 text-sm mb-1">Best Streak</Text>
-                  <Text className="text-amber-400 text-2xl font-bold">
-                    🏆 {sleepStats.bestStreak || 0}
-                  </Text>
-                  <Text className="text-gray-500 text-xs mt-1">Days in a row</Text>
-                </View>
-              </View>
-
-              {/* Total Sleep Time */}
-              <View className="w-1/2 pl-2 mb-4">
-                <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
-                  <Text className="text-gray-400 text-sm mb-1">Total Sleep</Text>
-                  <Text className="text-emerald-400 text-2xl font-bold">
-                    {sleepStats.totalSleep || '0h'}
-                  </Text>
-                  <Text className="text-gray-500 text-xs mt-1">All time</Text>
-                </View>
+                  </View>
+                </LinearGradient>
               </View>
             </View>
+          )}
 
-            {/* Sleep Quality Chart */}
-            <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50 mb-4">
-              <Text className="text-gray-400 text-sm mb-3">Sleep Quality</Text>
-              <View className="flex-row justify-between items-center">
-                <View className="items-center flex-1">
-                  <View className="w-full h-24 bg-gray-800/50 rounded-lg overflow-hidden">
-                    <View 
-                      className="bg-sky-500 w-full"
-                      style={{ 
-                        height: `${(user.deepSleep || 0) * 100}%`,
-                        marginTop: 'auto'
-                      }}
-                    />
-                  </View>
-                  <Text className="text-gray-400 text-xs mt-2">Deep</Text>
-                  <Text className="text-white text-sm font-medium">
-                    {Math.round((user.deepSleep || 0) * 100)}%
-                  </Text>
-                </View>
-                <View className="items-center flex-1 mx-2">
-                  <View className="w-full h-24 bg-gray-800/50 rounded-lg overflow-hidden">
-                    <View 
-                      className="bg-sky-500 w-full"
-                      style={{ 
-                        height: `${(user.lightSleep || 0) * 100}%`,
-                        marginTop: 'auto'
-                      }}
-                    />
-                  </View>
-                  <Text className="text-gray-400 text-xs mt-2">Light</Text>
-                  <Text className="text-white text-sm font-medium">
-                    {Math.round((user.lightSleep || 0) * 100)}%
-                  </Text>
-                </View>
-                <View className="items-center flex-1">
-                  <View className="w-full h-24 bg-gray-800/50 rounded-lg overflow-hidden">
-                    <View 
-                      className="bg-sky-500 w-full"
-                      style={{ 
-                        height: `${(user.rem || 0) * 100}%`,
-                        marginTop: 'auto'
-                      }}
-                    />
-                  </View>
-                  <Text className="text-gray-400 text-xs mt-2">REM</Text>
-                  <Text className="text-white text-sm font-medium">
-                    {Math.round((user.rem || 0) * 100)}%
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Sleep Schedule */}
-            <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
-              <Text className="text-gray-400 text-sm mb-3">Sleep Schedule</Text>
-              <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-gray-400">Average Bedtime</Text>
-                <Text className="text-white font-medium">
-                  {sleepStats.averageBedtime || '00:00'}
-                </Text>
-              </View>
-              <View className="flex-row justify-between items-center">
-                <Text className="text-gray-400">Sleep Consistency</Text>
-                <Text className="text-white font-medium">
-                  {sleepStats.consistencyPercentage || 0}%
-                </Text>
-              </View>
+          {/* Weekly Overview */}
+          <View className="px-4 mb-6">
+            <Text className="text-xl font-bold text-white mb-4">Weekly Overview </Text>
+            <View className="bg-slate-800/40 backdrop-blur-xl rounded-3xl border border-slate-700/50">
+              <LinearGradient
+                colors={['rgba(14, 165, 233, 0.1)', 'transparent']}
+                className="p-6 rounded-3xl"
+              >
+                <WeeklyStat 
+                  icon="bar-chart-2"
+                  label="Average Score"
+                  value={`${Math.round(days.reduce((acc, day) => 
+                    acc + (day.score || 0), 0) / days.filter(d => d.score !== null).length)}%`}
+                  color="#0ea5e9"
+                />
+                <WeeklyStat 
+                  icon="clock"
+                  label="Avg Duration"
+                  value={`${Math.round(days.reduce((acc, day) => 
+                    acc + (day.sleepData ? (new Date(day.sleepData.sleepEndTime) - 
+                    new Date(day.sleepData.sleepStartTime)) / (1000 * 60 * 60) : 0), 0) / 
+                    days.filter(d => d.sleepData).length * 10) / 10}h`}
+                  color="#4ade80"
+                />
+                <WeeklyStat 
+                  icon="check"
+                  label="Consistency"
+                  value={`${Math.round(days.filter(d => d.sleepData).length / DAYS * 100)}%`}
+                  color="#fbbf24"
+                />
+              </LinearGradient>
             </View>
           </View>
         </ScrollView>
@@ -813,3 +788,39 @@ export default function Tasks() {
     </LinearGradient>
   );
 }
+
+const SleepMetric = ({ icon, label, value, gradient }) => (
+  <View className="flex-row items-center justify-between py-3 px-4">
+    <View className="flex-row items-center">
+      <LinearGradient
+        colors={gradient}
+        className="w-10 h-10 rounded-full items-center justify-center"
+      >
+        <Feather name={icon} size={18} color="white" />
+      </LinearGradient>
+      <View className="ml-3">
+        <Text className="text-gray-400 text-sm">{label}</Text>
+        <Text className="text-white text-base font-medium mt-0.5">{value}</Text>
+      </View>
+    </View>
+    <View className="bg-gray-800/50 rounded-full p-1.5">
+      <Feather 
+        name="chevron-right" 
+        size={16} 
+        color={gradient[0]} 
+      />
+    </View>
+  </View>
+);
+
+const WeeklyStat = ({ icon, label, value, color }) => (
+  <View className="flex-row items-center justify-between mb-5 last:mb-0">
+    <View className="flex-row items-center">
+      <View className="w-10 h-10 rounded-full bg-slate-700/50 items-center justify-center">
+        <Feather name={icon} size={20} color={color} />
+      </View>
+      <Text className="text-gray-300 text-base ml-3">{label}</Text>
+    </View>
+    <Text className="text-xl font-bold" style={{ color }}>{value}</Text>
+  </View>
+);

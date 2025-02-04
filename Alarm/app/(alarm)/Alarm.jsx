@@ -64,6 +64,7 @@ export default function Alarm() {
       }
     });
     router.back();
+    router.push('/(pages)/CurrentSleep');
   };
 
   const handleSlideComplete = () => {
