@@ -7,12 +7,13 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGlobalContext } from '../context/GlobalProvider';
 import { useRouter } from 'expo-router';
 import Purchases from 'react-native-purchases';
+import { scheduleAlarmNotification } from './_layout';
 // import RevenueCatUI from 'react-native-purchases-ui';
 
 
 export default function Wake() {
   const router = useRouter();
-  const { user } = useGlobalContext();
+  const { user, updateUser } = useGlobalContext();
   const [showTimePickerPopup, setShowTimePickerPopup] = useState(false);
   const [selectedTime, setSelectedTime] = useState(new Date());
   const [isWakeUpSet, setIsWakeUpSet] = useState(false);
@@ -99,7 +100,7 @@ export default function Wake() {
     }
   }, [user]);
 
-  const handleSetWakeUpTime = (time) => {
+  const handleSetWakeUpTime = async (time) => {
     setSelectedTime(time);
     setIsWakeUpSet(true);
     setShowTimePickerPopup(false);
@@ -117,6 +118,9 @@ export default function Wake() {
         useNativeDriver: true,
       }),
     ]).start();
+
+    // Schedule the notification after setting the time
+    // await scheduleAlarmNotification(time);
   };
 
   const formatTime = (date) => {

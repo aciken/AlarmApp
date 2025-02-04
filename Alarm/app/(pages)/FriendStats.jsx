@@ -10,7 +10,7 @@ export default function FriendStats() {
   const [friendData, setFriendData] = useState(null);
 
   useEffect(() => {
-    axios.post('https://6eea-109-245-206-230.ngrok-free.app/getUser', {
+    axios.post('https://3f3b-109-245-206-230.ngrok-free.app/getUser', {
       id: friendId
     }).then((res) => {
       setFriendData(res.data);

@@ -15,14 +15,16 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.aciken.alarm",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
         "UIBackgroundModes": [
           "fetch",
           "remote-notification"
         ],
         "NSPhotoLibraryUsageDescription": "The app needs access to your photos to set your profile picture.",
-        "NSCameraUsageDescription": "The app needs access to your camera to take profile pictures."
+        "NSCameraUsageDescription": "The app needs access to your camera to take profile pictures.",
+        "UIRequiresPersistentWiFi": true,
+        "NSBackgroundRefreshStatus": "Available"
       }
     },
     "android": {
@@ -35,11 +37,7 @@
         "SCHEDULE_EXACT_ALARM",
         "USE_EXACT_ALARM",
         "RECEIVE_BOOT_COMPLETED",
-        "WAKE_LOCK",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "VIBRATE"
+        "WAKE_LOCK"
       ]
     },
     "web": {
@@ -52,7 +50,10 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#ffffff",
-          "sounds": ["./assets/alarm-sound.wav"]
+          "sounds": ["default"],
+          "androidMode": "default",
+          "androidCollapsedTitle": "Alarm",
+          "iosDisplayInForeground": true
         }
       ],
       [
@@ -72,4 +73,4 @@
       }
     }
   }
-} 
+}

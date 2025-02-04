@@ -372,7 +372,7 @@ export default function Tasks() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      axios.put('https://6eea-109-245-206-230.ngrok-free.app/nextChallenge', 
+      axios.put('https://3f3b-109-245-206-230.ngrok-free.app/nextChallenge', 
         {
           index: index,
           challenge: challenges[index].name,
@@ -507,6 +507,78 @@ export default function Tasks() {
       </View>
   );
 
+  const calculateSleepStats = () => {
+    if (!user.sleep || user.sleep.length === 0) return null;
+
+    // Average Sleep Time (last 7 days)
+    const lastWeekSleep = user.sleep
+      .slice(-7)
+      .filter(s => s.sleepStartTime && s.sleepEndTime)
+      .map(s => new Date(s.sleepEndTime) - new Date(s.sleepStartTime));
+    
+    const averageSleepMs = lastWeekSleep.length > 0 
+      ? lastWeekSleep.reduce((a, b) => a + b, 0) / lastWeekSleep.length
+      : 0;
+    const averageHours = Math.floor(averageSleepMs / 3600000);
+    const averageMinutes = Math.floor((averageSleepMs % 3600000) / 60000);
+
+    // Sleep Debt (assuming 8h target)
+    const targetSleep = 8 * 3600000;
+    const sleepDebtMs = lastWeekSleep.reduce((acc, duration) => 
+      acc + Math.max(targetSleep - duration, 0), 0);
+    const sleepDebtHours = Math.floor(sleepDebtMs / 3600000);
+
+    // Best Streak (consecutive days meeting 8h sleep)
+    let currentStreak = 0;
+    let bestStreak = 0;
+    user.sleep.forEach(sleep => {
+      if (sleep.sleepStartTime && sleep.sleepEndTime) {
+        const duration = new Date(sleep.sleepEndTime) - new Date(sleep.sleepStartTime);
+        if (duration >= targetSleep) {
+          currentStreak++;
+          bestStreak = Math.max(bestStreak, currentStreak);
+        } else {
+          currentStreak = 0;
+        }
+      }
+    });
+
+    // Total Sleep Time
+    const totalSleepMs = user.sleep.reduce((acc, sleep) => {
+      if (sleep.sleepStartTime && sleep.sleepEndTime) {
+        return acc + (new Date(sleep.sleepEndTime) - new Date(sleep.sleepStartTime));
+      }
+      return acc;
+    }, 0);
+    const totalSleepHours = Math.floor(totalSleepMs / 3600000);
+
+    // Sleep Consistency (percentage of days with bedtime within 1 hour of average)
+    const bedTimes = user.sleep
+      .filter(s => s.sleepStartTime)
+      .map(s => new Date(s.sleepStartTime).getHours());
+    const averageBedtime = bedTimes.length > 0 
+      ? bedTimes.reduce((a, b) => a + b, 0) / bedTimes.length
+      : 0;
+    const consistentDays = bedTimes.filter(t => Math.abs(t - averageBedtime) <= 1).length;
+    const consistencyPercentage = bedTimes.length > 0
+      ? Math.round((consistentDays / bedTimes.length) * 100)
+      : 0;
+
+    return {
+      averageSleep: `${averageHours}h ${averageMinutes}m`,
+      sleepDebt: `${sleepDebtHours}h`,
+      bestStreak,
+      totalSleep: `${totalSleepHours}h`,
+      consistencyPercentage,
+      averageBedtime: averageBedtime ? 
+        `${Math.floor(averageBedtime)}:${Math.round((averageBedtime % 1) * 60)}` 
+        : '00:00'
+    };
+  };
+
+  // Get the calculated stats
+  const sleepStats = calculateSleepStats() || {};
+
   return (
     <LinearGradient 
       colors={['#0f172a', '#1e293b']} 
@@ -626,7 +698,7 @@ export default function Tasks() {
                 <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
                   <Text className="text-gray-400 text-sm mb-1">Average Sleep</Text>
                   <Text className="text-sky-400 text-2xl font-bold">
-                    {user.averageSleep || '0h 0m'}
+                    {sleepStats.averageSleep || '0h 0m'}
                   </Text>
                   <Text className="text-gray-500 text-xs mt-1">Last 7 days</Text>
                 </View>
@@ -637,7 +709,7 @@ export default function Tasks() {
                 <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
                   <Text className="text-gray-400 text-sm mb-1">Sleep Debt</Text>
                   <Text className="text-rose-400 text-2xl font-bold">
-                    {user.sleepDebt || '0h'}
+                    {sleepStats.sleepDebt || '0h'}
                   </Text>
                   <Text className="text-gray-500 text-xs mt-1">This week</Text>
                 </View>
@@ -648,7 +720,7 @@ export default function Tasks() {
                 <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
                   <Text className="text-gray-400 text-sm mb-1">Best Streak</Text>
                   <Text className="text-amber-400 text-2xl font-bold">
-                    🏆 {user.bestStreak || 0}
+                    🏆 {sleepStats.bestStreak || 0}
                   </Text>
                   <Text className="text-gray-500 text-xs mt-1">Days in a row</Text>
                 </View>
@@ -659,7 +731,7 @@ export default function Tasks() {
                 <View className="bg-gray-900/50 rounded-2xl p-4 border border-gray-800/50">
                   <Text className="text-gray-400 text-sm mb-1">Total Sleep</Text>
                   <Text className="text-emerald-400 text-2xl font-bold">
-                    {user.totalSleep || '0h'}
+                    {sleepStats.totalSleep || '0h'}
                   </Text>
                   <Text className="text-gray-500 text-xs mt-1">All time</Text>
                 </View>
@@ -724,19 +796,13 @@ export default function Tasks() {
               <View className="flex-row justify-between items-center mb-2">
                 <Text className="text-gray-400">Average Bedtime</Text>
                 <Text className="text-white font-medium">
-                  {user.averageBedtime || '00:00'}
-                </Text>
-              </View>
-              <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-gray-400">Average Wake Time</Text>
-                <Text className="text-white font-medium">
-                  {user.averageWakeTime || '00:00'}
+                  {sleepStats.averageBedtime || '00:00'}
                 </Text>
               </View>
               <View className="flex-row justify-between items-center">
                 <Text className="text-gray-400">Sleep Consistency</Text>
                 <Text className="text-white font-medium">
-                  {user.sleepConsistency || 0}%
+                  {sleepStats.consistencyPercentage || 0}%
                 </Text>
               </View>
             </View>

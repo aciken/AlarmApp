@@ -260,7 +260,7 @@ export default function Sleep() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      axios.put('https://6eea-109-245-206-230.ngrok-free.app/nextChallenge', 
+      axios.put('https://3f3b-109-245-206-230.ngrok-free.app/nextChallenge', 
         {
           index: index,
           challenge: challenges[index].name,
