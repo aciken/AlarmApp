@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import axios from 'axios';
 import { useGlobalContext } from '../context/GlobalProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Feather } from '@expo/vector-icons';
 
 export default function CurrentSleep() {
   const { user, setUser, updateUser } = useGlobalContext();
@@ -13,6 +14,7 @@ export default function CurrentSleep() {
   const [minutes, setMinutes] = useState('00');
   const currentSleep = user.sleep.find(sleep => sleep.sleepEndTime === null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (!currentSleep) {
@@ -63,6 +65,17 @@ export default function CurrentSleep() {
     return () => clearInterval(timer);
   }, [currentSleep]);
 
+  // New progress animation
+  useEffect(() => {
+    if (currentSleep) {
+      Animated.timing(progressAnim, {
+        toValue: Math.min(parseInt(hours) / 8, 1),
+        duration: 1000,
+        useNativeDriver: false,
+      }).start();
+    }
+  }, [hours]);
+
   if (!currentSleep) {
     return null;
   }
@@ -79,7 +92,7 @@ export default function CurrentSleep() {
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
 
-    axios.put('https://3f3b-109-245-206-230.ngrok-free.app/endsleep', {
+    axios.put('https://ff79-109-245-206-230.ngrok-free.app/endsleep', {
       userId: user._id,
       sleepId: currentSleep._id,
       sleepEndTime: new Date()
@@ -98,98 +111,123 @@ export default function CurrentSleep() {
       style={{ flex: 1 }}
     >
       <SafeAreaView className="flex-1">
-        {/* Minimal Header */}
-        <View className="flex-row items-center px-4 pt-2">
+        {/* Enhanced Header */}
+        <View className="px-6 pt-4 pb-2 flex-row items-center justify-between">
           <TouchableOpacity 
             onPress={() => router.back()}
-            className="w-10 h-10 items-center justify-center"
+            className="p-2 rounded-full bg-slate-800/30"
           >
-            <Text className="text-2xl text-gray-400">↓</Text>
+            <Feather name="chevron-down" size={24} color="#94a3b8" />
           </TouchableOpacity>
-          <Text className="text-white text-lg font-medium ml-2">Sleep Session</Text>
+          <Text className="text-white text-lg font-semibold">Sleep Session</Text>
+          <View className="w-8" />{/* Properly formatted spacer */}
         </View>
 
         <View className="flex-1 px-6">
           {/* Main Content */}
-          <View className="flex-1 justify-center -mt-12">
-            {/* Animated Moon */}
-            <Animated.View 
-              style={{ transform: [{ scale: pulseAnim }] }}
-              className="items-center mb-8"
-            >
-              <LinearGradient
-                colors={['rgba(99, 102, 241, 0.2)', 'rgba(99, 102, 241, 0.1)']}
-                className="rounded-full p-8"
+          <View className="flex-1 justify-center">
+            {/* Animated Progress Circle */}
+            <View className="items-center mb-12">
+              <Animated.View 
+                style={{ 
+                  transform: [{ scale: pulseAnim }],
+                  shadowColor: '#0ea5e9',
+                  shadowOffset: { width: 0, height: 12 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 16,
+                }}
               >
-                <Text className="text-7xl">💤</Text>
-              </LinearGradient>
-            </Animated.View>
-
-            {/* Sleep Duration */}
-            <View className="items-center mb-8">
-              <Text className="text-gray-400 text-base mb-3">Sleep Duration</Text>
-              <Text className="text-white text-7xl font-bold tracking-tight">
-                {hours}
-                <Text className="text-gray-500 text-5xl font-light">:</Text>
-                {minutes}
-              </Text>
+                <LinearGradient
+                  colors={['rgba(14, 165, 233, 0.15)', 'rgba(30, 58, 138, 0.1)']}
+                  className="w-64 h-64 rounded-full items-center justify-center p-1"
+                >
+                  <View className="w-full h-full bg-slate-900/80 rounded-full items-center justify-center">
+                    <Text className="text-6xl mb-2">🌙</Text>
+                    <Text className="text-white text-4xl font-bold">
+                      {hours}<Text className="text-slate-600">:</Text>{minutes}
+                    </Text>
+                    <Text className="text-slate-400 text-sm mt-2">Sleep Duration</Text>
+                  </View>
+                </LinearGradient>
+              </Animated.View>
             </View>
 
-            {/* Sleep Info Card */}
-            <View className="bg-white/5 rounded-2xl p-5 border border-white/10">
-              <View className="flex-row justify-between items-center mb-6">
-                <View>
-                  <Text className="text-gray-400 text-sm">Started</Text>
-                  <Text className="text-white text-xl font-medium mt-1">
-                    {new Date(currentSleep.sleepStartTime).toLocaleTimeString('en-US', {
+            {/* Stats Grid */}
+            <View className="flex-row mb-6">
+              <View className="flex-1 mr-2 bg-slate-800/40 rounded-xl p-4 border border-slate-700/30">
+                <View className="flex-row items-center mb-2">
+                  <View className="w-8 h-8 rounded-lg bg-emerald-500/10 items-center justify-center mr-2">
+                    <Feather name="moon" size={18} color="#10b981" />
+                  </View>
+                  <Text className="text-emerald-400 text-sm">Started At</Text>
+                </View>
+                <Text className="text-white text-xl font-medium">
+                  {new Date(currentSleep.sleepStartTime).toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: false
+                  })}
+                </Text>
+              </View>
+
+              <View className="flex-1 ml-2 bg-slate-800/40 rounded-xl p-4 border border-slate-700/30">
+                <View className="flex-row items-center mb-2">
+                  <View className="w-8 h-8 rounded-lg bg-amber-500/10 items-center justify-center mr-2">
+                    <Feather name="sunrise" size={18} color="#f59e0b" />
+                  </View>
+                  <Text className="text-amber-400 text-sm">Wake Up At</Text>
+                </View>
+                <Text className="text-white text-xl font-medium">
+                  {user?.wakeup?.time ? 
+                    new Date(user.wakeup.time).toLocaleTimeString('en-US', {
                       hour: '2-digit',
                       minute: '2-digit',
                       hour12: false
-                    })}
-                  </Text>
-                </View>
-                <View className="h-8 w-[1px] bg-gray-700" />
-                <View>
-                  <Text className="text-gray-400 text-sm">Wake up</Text>
-                  <Text className="text-white text-xl font-medium mt-1">
-                    {user?.wakeup?.time ? 
-                      new Date(user.wakeup.time).toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                      }) : '--:--'
-                    }
-                  </Text>
-                </View>
+                    }) : '--:--'
+                  }
+                </Text>
               </View>
+            </View>
 
-              {/* Sleep Progress */}
-              <View className="space-y-2">
-                <View className="h-1.5 w-full bg-gray-800 rounded-full overflow-hidden">
+            {/* Progress Section */}
+            <View className="bg-slate-800/40 rounded-xl p-4 border border-slate-700/30">
+              <View className="flex-row justify-between mb-3">
+                <Text className="text-slate-400 text-sm">Sleep Progress</Text>
+                <Text className="text-slate-400 text-sm">
+                  {Math.round((parseInt(hours) / 8) * 100)}% of goal
+                </Text>
+              </View>
+              
+              <View className="h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                <Animated.View
+                  style={{
+                    width: progressAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0%', '100%']
+                    }),
+                    height: '100%',
+                  }}
+                >
                   <LinearGradient
-                    colors={['#6366f1', '#3b82f6']}
+                    colors={['#0ea5e9', '#3b82f6']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
                     className="h-full rounded-full"
-                    style={{ width: `${Math.min(Math.round((parseInt(hours) / 8) * 100), 100)}%` }}
                   />
-                </View>
-                <Text className="text-gray-500 text-xs text-center">
-                  {Math.round((parseInt(hours) / 8) * 100)}% of target sleep
-                </Text>
+                </Animated.View>
               </View>
             </View>
           </View>
 
-          {/* End Sleep Button - Fixed at bottom */}
-          <View className="pb-8">
+          {/* Enhanced End Button */}
+          <View className="pb-6">
             <TouchableOpacity 
               onPress={handleEndSleep}
-              className="w-full"
+              className="w-full overflow-hidden rounded-xl"
             >
               <LinearGradient
-                colors={['rgba(239, 68, 68, 0.15)', 'rgba(239, 68, 68, 0.05)']}
-                className="w-full py-4 rounded-xl border border-red-500/20"
+                colors={['rgba(239, 68, 68, 0.2)', 'rgba(239, 68, 68, 0.1)']}
+                className="w-full py-4 rounded-xl border border-red-500/30"
               >
                 <Text className="text-red-400 text-center font-medium text-lg">
                   End Sleep Session

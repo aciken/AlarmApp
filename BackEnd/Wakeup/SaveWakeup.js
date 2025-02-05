@@ -1,7 +1,7 @@
 const User = require('../User/User');
 
 const SaveWakeup = async (req, res) => {
-    const {time, vibration, gradualVolume, wakeUpChallange, alarmSound, userId} = req.body;
+    const {time, vibration, gradualVolume, wakeUpChallange, alarmSound, enabled, userId} = req.body;
 
     const user = await User.findById(userId);
     if(!user){
@@ -13,7 +13,8 @@ const SaveWakeup = async (req, res) => {
         vibration,
         gradualVolume,
         wakeUpChallange,
-        alarmSound
+        alarmSound,
+        enabled
     }
 
     await user.save();

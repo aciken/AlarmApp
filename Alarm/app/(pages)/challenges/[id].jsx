@@ -1,15 +1,18 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, Link, useNavigation } from 'expo-router';
 import { useState } from 'react';
 import { useGlobalContext } from '../../context/GlobalProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 
 export default function ChallengeDetails() {
+  const router = useRouter();
   const { id } = useLocalSearchParams();
   const [showExample, setShowExample] = useState(false);
   const { user } = useGlobalContext();
+  const navigation = useNavigation();
   
   // Get current challenge level from user settings
   const currentLevel = user?.wakeup?.challengeLevel || 1;
@@ -108,6 +111,33 @@ export default function ChallengeDetails() {
       });
   };
 
+  // Add this function to map challenge level to difficulty
+  const getDifficultyLevel = (challengeLevel) => {
+    switch(challengeLevel) {
+      case 1: return 1; // Bronze - Easy
+      case 2: return 2; // Silver - Medium
+      case 3: return 3; // Gold - Hard
+      default: return 1;
+    }
+  };
+
+  // Update the handleExamplePress function
+  const handleExamplePress = async(level) => {
+    try {
+      router.back();
+      router.back();
+      router.push({
+        pathname: 'AlarmChallenge',
+        params: {
+          level: level.toString(),
+          type: id  // 'math', 'memory', or 'shake'
+        }
+      });
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
   return (
     <LinearGradient 
       colors={['#0f172a', '#1e293b']} 
@@ -169,11 +199,11 @@ export default function ChallengeDetails() {
               </View>
               <Text className="text-gray-400 mb-3">{level.description}</Text>
               <TouchableOpacity
-                onPress={() => setShowExample(index)}
-                className="bg-gray-800/50 rounded-lg p-3"
+                onPress={() => handleExamplePress(level.level)}
+                className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-4 mb-6"
               >
-                <Text className="text-gray-300 text-sm">
-                  {showExample === index ? level.example : 'Tap to see example'}
+                <Text className="text-sky-400 text-center">
+                  Tap to see example
                 </Text>
               </TouchableOpacity>
             </TouchableOpacity>

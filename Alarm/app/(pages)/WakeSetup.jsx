@@ -19,6 +19,7 @@ export default function WakeSetup() {
         challenge: user.wakeup?.wakeUpChallange ?? 'math', // 'math', 'memory', 'shake'
         challengeLevel: user.wakeup?.challengeLevel ?? 1,
         music: user.wakeup?.alarmSound ?? 'peaceful', // 'peaceful', 'energetic', 'nature'
+        enabled: user.wakeup?.enabled ?? true,
     });
 
     const [selectedTime, setSelectedTime] = useState(
@@ -77,7 +78,8 @@ export default function WakeSetup() {
                 gradualVolume: settings.gradualVolume,
                 wakeUpChallange: settings.challenge,
                 challengeLevel: settings.challengeLevel,
-                alarmSound: settings.music
+                alarmSound: settings.music,
+                enabled: settings.enabled
             }
         });
 
@@ -85,13 +87,14 @@ export default function WakeSetup() {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
 
-        axios.put('https://3f3b-109-245-206-230.ngrok-free.app/savewakeup', {
+        axios.put('https://ff79-109-245-206-230.ngrok-free.app/savewakeup', {
             time: selectedTime,
             vibration: settings.vibration,
             gradualVolume: settings.gradualVolume,
             wakeUpChallange: settings.challenge,
             challengeLevel: settings.challengeLevel,
             alarmSound: settings.music,
+            enabled: settings.enabled,
             userId: user._id
         })
             .then((res) => {
@@ -146,6 +149,22 @@ export default function WakeSetup() {
                         </View>
                     </View>
 
+                    {/* Alarm Switch */}
+                    <View className="bg-gray-800/40 rounded-2xl p-4 mb-6">
+                        <View className="flex-row justify-between items-center">
+                            <View>
+                                <Text className="text-white text-base font-medium">Alarm</Text>
+                                <Text className="text-gray-400 text-sm">Turn alarm on/off</Text>
+                            </View>
+                            <Switch
+                                value={settings.enabled}
+                                onValueChange={(value) => setSettings(prev => ({ ...prev, enabled: value }))}
+                                trackColor={{ false: '#1e293b', true: '#0284c7' }}
+                                thumbColor="#ffffff"
+                            />
+                        </View>
+                    </View>
+
                     {/* Basic Settings */}
                     <View className="bg-gray-800/40 rounded-2xl p-4 mb-6">
                         <View className="flex-row justify-between items-center mb-4">
@@ -157,7 +176,7 @@ export default function WakeSetup() {
                                 value={settings.vibration}
                                 onValueChange={(value) => setSettings(prev => ({ ...prev, vibration: value }))}
                                 trackColor={{ false: '#1e293b', true: '#0284c7' }}
-                                thumbColor={settings.vibration ? '#38bdf8' : '#64748b'}
+                                thumbColor="#ffffff"
                             />
                         </View>
 
@@ -170,7 +189,7 @@ export default function WakeSetup() {
                                 value={settings.gradualVolume}
                                 onValueChange={(value) => setSettings(prev => ({ ...prev, gradualVolume: value }))}
                                 trackColor={{ false: '#1e293b', true: '#0284c7' }}
-                                thumbColor={settings.gradualVolume ? '#38bdf8' : '#64748b'}
+                                thumbColor="#ffffff"
                             />
                         </View>
                     </View>

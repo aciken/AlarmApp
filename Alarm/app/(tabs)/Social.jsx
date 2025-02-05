@@ -41,7 +41,7 @@ export default function Social() {
     const [friendData, setFriendData] = useState(null);
 
     useEffect(() => {
-      axios.post('https://3f3b-109-245-206-230.ngrok-free.app/getUser', {
+      axios.post('https://ff79-109-245-206-230.ngrok-free.app/getUser', {
         id: friend
       }).then((res) => {
         setFriendData(res.data);
@@ -185,35 +185,11 @@ export default function Social() {
               {/* Name */}
               <View className="mb-6">
                 <Text className="text-gray-400 text-sm mb-2 font-medium">NAME</Text>
-                {isEditingName ? (
-                  <View className="flex-row items-center">
-                    <TextInput
-                      value={newName}
-                      onChangeText={setNewName}
-                      className="flex-1 bg-gray-800/50 rounded-xl px-4 py-2.5 text-white text-base"
-                      placeholderTextColor="#64748b"
-                      placeholder="Enter your name"
-                    />
-                    <TouchableOpacity 
-                      onPress={handleNameSave}
-                      className="ml-2 bg-sky-500 px-4 py-2.5 rounded-xl"
-                    >
-                      <Text className="text-white font-medium">Save</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <View className="flex-row justify-between items-center bg-gray-800/30 rounded-xl px-4 py-2.5">
-                    <Text className="text-white text-base font-medium">
-                      {user.name || 'Set your name'}
-                    </Text>
-                    <TouchableOpacity 
-                      onPress={() => setIsEditingName(true)}
-                      className="bg-sky-500/20 px-3 py-1 rounded-full"
-                    >
-                      <Text className="text-sky-400 font-medium">Edit</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                <View className="bg-gray-800/30 rounded-xl px-4 py-2.5">
+                  <Text className="text-white text-base font-medium">
+                    {user.name || 'Anonymous'}
+                  </Text>
+                </View>
               </View>
 
               {/* Social ID */}

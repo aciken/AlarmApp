@@ -47,7 +47,7 @@ export default function SleepSetup() {
 
 
     console.log(user._id, selectedSound, new Date());
-    axios.put('https://3f3b-109-245-206-230.ngrok-free.app/startsleep', {
+    axios.put('https://ff79-109-245-206-230.ngrok-free.app/startsleep', {
       userId: user._id,
       sleepStartTime: new Date(),
       sleepId: sleepId,

@@ -54,7 +54,7 @@ export default function Wake() {
   useEffect(() => {
     // Check for alarm time every second
     const checkAlarm = setInterval(() => {
-      if (user.wakeup.time) {
+      if (user.wakeup.time && user.wakeup.enabled) {
         const now = new Date();
         const alarmTime = new Date(user.wakeup.time);
         
@@ -68,7 +68,7 @@ export default function Wake() {
     }, 1000);
 
     return () => clearInterval(checkAlarm);
-  }, [user.wakeup.time]);
+  }, [user.wakeup.time, user.wakeup.enabled]);
 
   useEffect(() => {
     const setupPurchases = async () => {
@@ -258,22 +258,35 @@ export default function Wake() {
                 style={{
                   backgroundColor: 'rgba(30, 41, 59, 0.9)',
                   borderWidth: 2,
-                  borderColor: getWakeupTime() ? '#0ea5e9' : 'rgba(14, 165, 233, 0.1)',
+                  borderColor: getWakeupTime() ? 
+                    (user.wakeup?.enabled ? '#0ea5e9' : '#64748b') : 
+                    'rgba(14, 165, 233, 0.1)',
                 }}
               >
                 <LinearGradient
                   colors={getWakeupTime() ? 
-                    ['rgba(14, 165, 233, 0.2)', 'rgba(37, 99, 235, 0.1)'] : 
+                    (user.wakeup?.enabled ?
+                      ['rgba(14, 165, 233, 0.2)', 'rgba(37, 99, 235, 0.1)'] :
+                      ['rgba(100, 116, 139, 0.2)', 'rgba(100, 116, 139, 0.1)']
+                    ) : 
                     ['rgba(30, 41, 59, 0.8)', 'rgba(30, 41, 59, 0.9)']}
                   className="absolute w-full h-full rounded-full"
                 />
                 {getWakeupTime() ? (
                   <View className="items-center">
-                    <Text className="text-gray-400 text-base mb-1">Wake up at</Text>
-                    <Text className="text-7xl font-bold text-white tracking-tight">
+                    <Text className="text-gray-400 text-base mb-1">
+                      {user.wakeup?.enabled ? 'Wake up at' : 'Alarm disabled'}
+                    </Text>
+                    <Text className={`text-7xl font-bold tracking-tight ${
+                      user.wakeup?.enabled ? 'text-white' : 'text-gray-500'
+                    }`}>
                       {formatTime(new Date(getWakeupTime()))}
                     </Text>
-                    <Text className="text-sky-400/80 text-sm mt-3">tap to adjust</Text>
+                    <Text className={`text-sm mt-3 ${
+                      user.wakeup?.enabled ? 'text-sky-400/80' : 'text-gray-500'
+                    }`}>
+                      tap to adjust
+                    </Text>
                   </View>
                 ) : (
                   <View className="items-center">

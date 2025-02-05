@@ -17,7 +17,7 @@ export default function SignUp() {
     const handleSignUp = () => {
         console.log(name, email, password, confirmPassword);
 
-        axios.put('https://6eea-109-245-206-230.ngrok-free.app/signup', {name, email, password, confirmPassword})
+        axios.put('https://ff79-109-245-206-230.ngrok-free.app/signup', {name, email, password, confirmPassword})
         .then((res) => {
             if(res.status == 201){
             AsyncStorage.setItem('@user', JSON.stringify(res.data));

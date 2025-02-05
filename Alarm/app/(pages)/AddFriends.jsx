@@ -12,7 +12,7 @@ const RequestItem = ({ request, onAccept, onDecline, isPending = false }) => {
   const [requestData, setRequestData] = useState(null);
 
   useEffect(() => {
-    axios.post('https://3f3b-109-245-206-230.ngrok-free.app/getUser', {
+    axios.post('https://ff79-109-245-206-230.ngrok-free.app/getUser', {
       id: request
     }).then((res) => {
       setRequestData(res.data);
@@ -137,7 +137,7 @@ export default function AddFriends() {
   useEffect(() => {
     const handleSocialCheck = async () => {
       if (searchQuery.length === 8) {
-        axios.post('https://3f3b-109-245-206-230.ngrok-free.app/socialCheck', {
+        axios.post('https://ff79-109-245-206-230.ngrok-free.app/socialCheck', {
           socialId: searchQuery,
           userId: user._id
         }).then((res) => {
@@ -194,7 +194,7 @@ export default function AddFriends() {
   const handleAddFriend = async (userId) => {
     setSearchResult(null);
     setSearchQuery('');
-    axios.put('https://3f3b-109-245-206-230.ngrok-free.app/addFriend', {
+    axios.put('https://ff79-109-245-206-230.ngrok-free.app/addFriend', {
       userId: user._id,
       friendId: userId
     }).then((res) => {
@@ -205,7 +205,7 @@ export default function AddFriends() {
 
   const handleAcceptRequest = async (userId) => {
     console.log(userId);
-    axios.put('https://3f3b-109-245-206-230.ngrok-free.app/acceptRequest', {
+    axios.put('https://ff79-109-245-206-230.ngrok-free.app/acceptRequest', {
       userId: user._id,
       friendId: userId
     }).then((res) => {
@@ -217,7 +217,7 @@ export default function AddFriends() {
   }
 
   const handleDeclineRequest = async (userId) => {
-    axios.put('https://3f3b-109-245-206-230.ngrok-free.app/declineRequest', {
+    axios.put('https://ff79-109-245-206-230.ngrok-free.app/declineRequest', {
       userId: user._id,
       friendId: userId
     }).then((res) => {

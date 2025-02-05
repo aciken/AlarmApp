@@ -71,7 +71,12 @@ export default function Sleep() {
     const challenges = {
       'Early Bird': {
         title: 'Early Bird',
-        description: 'Wake up before 7 AM', 
+        description: level === 1 ? 'Wake up before 7 AM for 1 day in a row' :
+                    level === 2 ? 'Wake up before 7 AM for 3 days in a row' :
+                    level === 3 ? 'Wake up before 7 AM for 5 days in a row' :
+                    level === 4 ? 'Wake up before 7 AM for 7 days in a row' :
+                    level === 5 ? 'Wake up before 7 AM for 14 days in a row' :
+                    'Wake up before 7 AM for 30 days in a row',
         icon: '🌅',
         tier: level === 1 ? 'BRONZE' : 
               level === 2 ? 'SILVER' : 
@@ -89,12 +94,12 @@ export default function Sleep() {
       },
       'Consistent Schedule': {
         title: 'Consistent Schedule',
-        description: level === 1 ? 'Maintain same sleep schedule for 2 days in a row' :
-                    level === 2 ? 'Maintain same sleep schedule for 4 days in a row' :
-                    level === 3 ? 'Maintain same sleep schedule for 6 days in a row' :
-                    level === 4 ? 'Maintain same sleep schedule for 8 days in a row' :
-                    level === 5 ? 'Maintain same sleep schedule for 14 days in a row' :
-                    'Maintain same sleep schedule for 30 days in a row',
+        description: level === 1 ? 'Go to bed at the same time for 2 days in a row' :
+                    level === 2 ? 'Go to bed at the same time for 4 days in a row' :
+                    level === 3 ? 'Go to bed at the same time for 6 days in a row' :
+                    level === 4 ? 'Go to bed at the same time for 8 days in a row' :
+                    level === 5 ? 'Go to bed at the same time for 14 days in a row' :
+                    'Go to bed at the same time for 30 days in a row',
         icon: '⏰',
         tier: level === 1 ? 'BRONZE' : 
               level === 2 ? 'SILVER' : 
@@ -135,7 +140,12 @@ export default function Sleep() {
       },
       'Sleep Champion': {
         title: 'Sleep Champion',
-        description: 'Get 8+ hours of sleep',
+        description: level === 1 ? 'Get 8+ hours of sleep for 1 day in a row' :
+                    level === 2 ? 'Get 8+ hours of sleep for 3 days in a row' :
+                    level === 3 ? 'Get 8+ hours of sleep for 5 days in a row' :
+                    level === 4 ? 'Get 8+ hours of sleep for 7 days in a row' :
+                    level === 5 ? 'Get 8+ hours of sleep for 14 days in a row' :
+                    'Get 8+ hours of sleep for 30 days in a row',
         icon: '👑',
         tier: level === 1 ? 'BRONZE' : 
               level === 2 ? 'SILVER' : 
@@ -158,11 +168,23 @@ export default function Sleep() {
 
   const checkChallengeProgress = (name, level) => {
     if(name === 'Early Bird') {
-      return user.sleep.reduce((count, sleep) => {
-        const sleepTime = new Date(sleep.sleepEndTime);
-        return sleepTime.getHours() < 7 ? count + 1 : count;
-      }, 0);
-    }else if(name === 'Consistent Schedule') {
+      const completedSessions = user.sleep.filter(sleep => sleep.sleepEndTime);
+      const sortedSessions = completedSessions.sort((a, b) => 
+        new Date(b.sleepEndTime) - new Date(a.sleepEndTime)
+      );
+
+      let streak = 0;
+      for (const sleep of sortedSessions) {
+        const wakeTime = new Date(sleep.sleepEndTime);
+        if (wakeTime.getHours() < 7) {
+          streak++;
+        } else {
+          break; // Break streak if woke up after 7 AM
+        }
+      }
+      return streak;
+
+    } else if(name === 'Consistent Schedule') {
       const completedSessions = user.sleep.filter(sleep => sleep.sleepEndTime);
       const sortedSessions = completedSessions.sort((a, b) => 
         new Date(b.sleepStartTime) - new Date(a.sleepStartTime)
@@ -182,23 +204,52 @@ export default function Sleep() {
         if (Math.abs(timeDiff - TWENTY_FOUR_HOURS) <= FIFTEEN_MINUTES) {
           streak++;
         } else {
-          break;
+          break; // Break streak if schedule differs by more than 15 minutes
         }
       }
 
       return streak;
-    }else if (name === 'Sleep Champion'){
-      return user.sleep.reduce((count, sleep) => {
-        if (!sleep.sleepEndTime || !sleep.sleepStartTime) return count;
-        
+
+    } else if (name === 'Sleep Champion') {
+      const completedSessions = user.sleep.filter(sleep => sleep.sleepEndTime);
+      const sortedSessions = completedSessions.sort((a, b) => 
+        new Date(b.sleepEndTime) - new Date(a.sleepEndTime)
+      );
+
+      let streak = 0;
+      for (const sleep of sortedSessions) {
         const start = new Date(sleep.sleepStartTime);
         const end = new Date(sleep.sleepEndTime);
         const durationMs = end - start;
         const durationHours = durationMs / (1000 * 60 * 60);
         
-        return durationHours >= 8 ? count + 1 : count;
-      }, 0);
-    }else return 0;
+        if (durationHours >= 8) {
+          streak++;
+        } else {
+          break; // Break streak if sleep was less than 8 hours
+        }
+      }
+      return streak;
+
+    } else if (name === 'No Snooze Master') {
+      // Assuming we track snooze usage in sleep data
+      const completedSessions = user.sleep.filter(sleep => sleep.sleepEndTime);
+      const sortedSessions = completedSessions.sort((a, b) => 
+        new Date(b.sleepEndTime) - new Date(a.sleepEndTime)
+      );
+
+      let streak = 0;
+      for (const sleep of sortedSessions) {
+        if (!sleep.snoozed) { // You'll need to add this property to your sleep data
+          streak++;
+        } else {
+          break; // Break streak if snoozed
+        }
+      }
+      return streak;
+    }
+    
+    return 0;
   };
 
   const [challenges, setChallenges] = useState(
@@ -260,7 +311,7 @@ export default function Sleep() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      axios.put('https://3f3b-109-245-206-230.ngrok-free.app/nextChallenge', 
+      axios.put('https://ff79-109-245-206-230.ngrok-free.app/nextChallenge', 
         {
           index: index,
           challenge: challenges[index].name,
